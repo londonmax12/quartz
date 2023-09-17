@@ -32,3 +32,6 @@
 *.app
 
 build/
+quartz-compiler/.idea/
+quartz-compiler/cmake-build-debug-wsl/
+quartz-compiler/cmake-build-relwithdebinfo-wsl/
