@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/quartz-compiler.dir/quartz-compiler/src/main.cpp.o -o quartz-compiler 
