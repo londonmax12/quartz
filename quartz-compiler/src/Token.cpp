@@ -15,8 +15,8 @@ std::string Token::Str() {
             return "INT_LITERAL: " + m_Value;
             break;
         }
-        case TokenType::RETURN: {
-                return "RETURN";
+        case TokenType::EXIT: {
+                return "EXIT";
                 break;
         }
         default: {

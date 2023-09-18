@@ -7,7 +7,15 @@
 
 class Lexer {
 public:
-    std::vector<Token> Tokenize(const std::string& data);
+    Lexer(std::string src);
+    std::vector<Token> Tokenize();
+
+private:
+    const std::string m_Src;
+    int m_Index = 0;
+
+    char Peak(int ahead = 1);
+    char Consume();
 };
 
 

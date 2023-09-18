@@ -4,7 +4,7 @@
 #include <string>
 
 enum TokenType {
-    RETURN,
+    EXIT,
     INT_LIT,
     ENDL
 };

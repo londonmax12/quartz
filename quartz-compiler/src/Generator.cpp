@@ -11,7 +11,7 @@ std::string Generator::GenerateASM(const std::vector<Token> &tokens) {
 
     for (int i = 0; i < tokens.size(); i++) {
         const Token& token = tokens.at(i);
-        if (token.m_Type == TokenType::RETURN) {
+        if (token.m_Type == TokenType::EXIT) {
             if (i + 2 < tokens.size()) {
                 Token exitCode = tokens.at(i + 1);
                 Token endline = tokens.at(i + 2);

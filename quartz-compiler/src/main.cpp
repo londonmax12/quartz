@@ -30,8 +30,8 @@ int main(int argc, char* argv[]) {
         free(buffer);
     }
 
-    Lexer lexer{};
-    std::vector<Token> tokens = lexer.Tokenize(inputStr);
+    Lexer lexer{inputStr};
+    std::vector<Token> tokens = lexer.Tokenize();
 
     Generator generator{};
     std::string outASM = generator.GenerateASM(tokens);
