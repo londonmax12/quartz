@@ -5,10 +5,15 @@
 #include <vector>
 
 #include "Token.h"
+#include "ParserNode.h"
 
 class Generator {
 public:
-    std::string GenerateASM(const std::vector<Token>& tokens);
+    Generator(ExitNode source);
+
+    std::string GenerateASM();
+private:
+    ExitNode m_Source;
 };
 
 

@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Lexer.h"
+#include "Parser.h"
 #include "Generator.h"
 
 int main(int argc, char* argv[]) {
@@ -29,12 +30,17 @@ int main(int argc, char* argv[]) {
         inputStr = buffer;
         free(buffer);
     }
-
+    std::cout << "Performing lexical analysis...\n";
     Lexer lexer{inputStr};
     std::vector<Token> tokens = lexer.Tokenize();
 
-    Generator generator{};
-    std::string outASM = generator.GenerateASM(tokens);
+    std::cout << "Parsing tokens...\n";
+    Parser parser{tokens};
+    ExitNode exitNode = parser.Parse();
+
+    std::cout << "Generating assembly sources...\n";
+    Generator generator{exitNode};
+    std::string outASM = generator.GenerateASM();
 
     std::fstream outputFile{"out.asm", std::ios::out};
     outputFile << outASM;

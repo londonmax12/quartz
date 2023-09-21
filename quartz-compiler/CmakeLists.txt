@@ -10,4 +10,8 @@ add_executable(quartz-compiler src/main.cpp
         src/Token.cpp
         src/Token.h
         src/Generator.cpp
-        src/Generator.h)
+        src/Generator.h
+        src/Parser.cpp
+        src/Parser.h
+        src/ParserNode.cpp
+        src/ParserNode.h)

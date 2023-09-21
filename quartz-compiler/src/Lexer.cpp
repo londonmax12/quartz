@@ -2,6 +2,11 @@
 
 #include <iostream>
 
+Lexer::Lexer(std::string src)
+        : m_Src(src)
+{
+}
+
 std::vector<Token> Lexer::Tokenize() {
     std::vector<Token> tokens{};
     std::string currString{};
@@ -48,11 +53,6 @@ std::vector<Token> Lexer::Tokenize() {
 
     m_Index = 0;
     return tokens;
-}
-
-Lexer::Lexer(std::string src)
-    : m_Src(src)
-{
 }
 
 char Lexer::Peak(int ahead) {
