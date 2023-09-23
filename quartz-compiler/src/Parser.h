@@ -10,14 +10,16 @@ class Parser {
 public:
     Parser(std::vector<Token> tokens);
 
-    ExprNode ParseExpr();
-    ExitNode Parse();
+    NodeProgram ParseProgram();
 private:
     std::vector<Token> m_Tokens;
     int m_Index = 0;
 
-    Token Peak(int ahead = 1);
-    Token Consume();
+    Token Peak(int offset = 0);
+    Token Consume(int amount = 1);
+
+    NodeExpr ParseExpr();
+    NodeStatement ParseStatement();
 };
 
 #endif //QUARTZ_PARSER_H

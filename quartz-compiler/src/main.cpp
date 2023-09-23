@@ -36,11 +36,11 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Parsing tokens...\n";
     Parser parser{tokens};
-    ExitNode exitNode = parser.Parse();
+    NodeProgram exitNode = parser.ParseProgram();
 
     std::cout << "Generating assembly sources...\n";
     Generator generator{exitNode};
-    std::string outASM = generator.GenerateASM();
+    std::string outASM = generator.GenerateProgram();
 
     std::fstream outputFile{"out.asm", std::ios::out};
     outputFile << outASM;

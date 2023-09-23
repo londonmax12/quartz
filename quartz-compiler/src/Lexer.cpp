@@ -22,12 +22,22 @@ std::vector<Token> Lexer::Tokenize() {
                 currString.clear();
                 continue;
             }
-            else {
-                std::cerr << "Unexpected identifier: " << currString << "\n";
-                exit(1);
+            if (currString == "var") {
+                tokens.push_back({TokenType::VAR});
+                currString.clear();
+                continue;
             }
+            if (currString == "int") {
+                tokens.push_back({TokenType::VAR_INT});
+                currString.clear();
+                continue;
+            }
+
+            tokens.push_back({TokenType::IDENTIFIER, currString});
+            currString.clear();
+            continue;
         }
-        else if (std::isdigit(Peak())) {
+        if (std::isdigit(Peak())) {
             currString += Consume();
             while (Peak() && std::isdigit(Peak())) {
                 currString += Consume();
@@ -36,12 +46,32 @@ std::vector<Token> Lexer::Tokenize() {
             currString.clear();
             continue;
         }
-        else if (Peak() == ';') {
+        if (Peak() == ';') {
             Consume();
             tokens.push_back({TokenType::ENDL});
             continue;
         }
-        else if (std::isspace(Peak())) {
+        if (Peak() == '(') {
+            Consume();
+            tokens.push_back({TokenType::OPEN_PAREN});
+            continue;
+        }
+        if (Peak() == ')') {
+            Consume();
+            tokens.push_back({TokenType::CLOSE_PAREN});
+            continue;
+        }
+        if (Peak() == '=') {
+            Consume();
+            tokens.push_back({TokenType::EQUALS});
+            continue;
+        }
+        if (Peak() == ':') {
+            Consume();
+            tokens.push_back({TokenType::COLON});
+            continue;
+        }
+        if (std::isspace(Peak())) {
             Consume();
             continue;
         }
@@ -55,11 +85,11 @@ std::vector<Token> Lexer::Tokenize() {
     return tokens;
 }
 
-char Lexer::Peak(int ahead) {
-    if (m_Index + ahead > m_Src.length()) {
+char Lexer::Peak(int offset) {
+    if (m_Index + offset >= m_Src.length()) {
         return (char)0;
     }
-    return m_Src[m_Index];
+    return m_Src[m_Index + offset];
 }
 
 char Lexer::Consume() {

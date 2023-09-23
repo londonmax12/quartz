@@ -14,7 +14,7 @@ private:
     const std::string m_Src;
     int m_Index = 0;
 
-    char Peak(int ahead = 1);
+    char Peak(int offset = 0);
     char Consume();
 };
 

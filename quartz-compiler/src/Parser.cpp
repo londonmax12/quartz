@@ -8,50 +8,117 @@ Parser::Parser(std::vector<Token> tokens)
 
 }
 
-Token Parser::Peak(int ahead) {
-    if (m_Index + ahead > m_Tokens.size()) {
+Token Parser::Peak(int offset) {
+    if (m_Index + offset >= m_Tokens.size()) {
         return {TokenType::NONE};
     }
-    return m_Tokens[m_Index];
+    return m_Tokens[m_Index + offset];
 }
 
-Token Parser::Consume() {
-    return m_Tokens[m_Index++];
+Token Parser::Consume(int amount) {
+    Token lastToken;
+    for(int i = 0; i < amount; i++) {
+        lastToken = m_Tokens[m_Index++];
+    }
+    return lastToken;
 }
 
-ExitNode Parser::Parse() {
-    ExitNode exitNode{};
+NodeProgram Parser::ParseProgram() {
+    NodeProgram nodeProgram;
     while (Peak().GetType() != TokenType::NONE)
     {
-        switch (Peak().GetType()) {
-            case TokenType::EXIT: {
-                Consume();
-                ExprNode exprNode = ParseExpr();
-                if (exprNode.IntLiteral.GetType() != NONE ) {
-                    exitNode = ExitNode(exprNode);
-                }
-                else {
-                    std::cerr << "Invalid expression\n";
-                    exit(1);
-                }
-                if (Peak().GetType() != TokenType::ENDL) {
-                    std::cerr << "Expected semi colon\n";
-                    exit(1);
-                }
-                break;
-            }
-            default: {
-                Consume();
-                break;
-            }
+        NodeStatement statement = ParseStatement();
+        if (std::holds_alternative<NodeEmpty>(statement.Statement)) {
+            std::cerr << "Invalid statement\n";
+            exit(1);
         }
+        nodeProgram.Statements.push_back(statement);
     }
-    return exitNode;
+    return nodeProgram;
 }
 
-ExprNode Parser::ParseExpr() {
+NodeExpr Parser::ParseExpr() {
     if (Peak().GetType() == TokenType::INT_LIT) {
-        return ExprNode(Consume());
+        return NodeExpr(NodeExprIntLit(Consume()));
     }
-    return ExprNode(Token{TokenType::NONE});
+    if (Peak().GetType() == TokenType::IDENTIFIER) {
+        return NodeExpr(NodeExprIdentifier{Consume()});
+    }
+    return NodeExpr(NodeEmpty{});
+}
+
+NodeStatement Parser::ParseStatement() {
+    switch (Peak().GetType()) {
+        case TokenType::EXIT: {
+            if (Peak(1).GetType() != TokenType::OPEN_PAREN) {
+                std::cerr << "Expected \'(\'\n";
+                exit(1);
+            }
+            Consume(2);
+
+            NodeStatementExit nodeExit;
+            NodeExpr nodeExpr = ParseExpr();
+            if (std::holds_alternative<NodeEmpty>(nodeExpr.Expr)) {
+                std::cerr << "Invalid expression\n";
+                exit(1);
+            }
+            nodeExit = NodeStatementExit(nodeExpr.Expr);
+
+            if (Peak().GetType() != TokenType::CLOSE_PAREN) {
+                std::cerr << "Expected \')\'\n";
+                exit(1);
+            }
+            Consume();
+
+            if (Peak().GetType() != TokenType::ENDL) {
+                std::cerr << "Expected \';\'\n";
+                exit(1);
+            }
+            Consume();
+
+            return NodeStatement{nodeExit};
+        }
+        case TokenType::VAR: {
+            Consume();
+            if (Peak().GetType() != TokenType::IDENTIFIER) {
+                std::cerr << "Expected identifier\n";
+                exit(1);
+            }
+            if (Peak(1).GetType() != TokenType::COLON) {
+                std::cerr << "Expected \':\'\n";
+                exit(1);
+            }
+            if (Peak(2).GetType() != TokenType::VAR_INT) {
+                std::cerr << "Expected variable type\n";
+                exit(1);
+            }
+            if (Peak(3).GetType() != TokenType::EQUALS) {
+                std::cerr << "Expected \'=\'\n";
+                exit(1);
+            }
+
+            Token varIdentifier = Consume();
+            Consume(3);
+
+            NodeExpr varExpr = ParseExpr().Expr;
+
+            if (std::holds_alternative<NodeEmpty>(varExpr.Expr)) {
+                std::cerr << "Expected expression\n";
+                exit(1);
+            }
+            NodeStatementVarDecl varDecl{varIdentifier, varExpr};
+
+            if (Peak().GetType() != TokenType::ENDL) {
+                std::cerr << "Expected \';\'\n";
+                exit(1);
+            }
+            Consume();
+
+            return NodeStatement{varDecl};
+        }
+        default: {
+            Consume();
+            return NodeStatement{NodeEmpty{}};
+        }
+    }
 }
