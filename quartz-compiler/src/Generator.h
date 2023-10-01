@@ -15,8 +15,9 @@ public:
 
     std::string GenerateProgram();
 private:
-    void GenerateExpr(const NodeExpr& expr);
-    void GenerateStatement(const NodeStatement& statement);
+    void GenerateExpr(NodeExpr* expr);
+    void GenerateStatement(NodeStatement* statement);
+    void GenerateTerm(NodeTerm* term);
 
     void Push(const std::string& reg);
     void Pop(const std::string& reg);

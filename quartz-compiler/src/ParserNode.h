@@ -8,49 +8,67 @@
 
 struct NodeEmpty {};
 
-struct NodeExprIntLit {
-    NodeExprIntLit() {};
-    NodeExprIntLit(Token intLiteral)
-        : IntLiteral(intLiteral) {};
+struct NodeExpr;
 
-    Token IntLiteral;
+struct NodeBinExprAdd {
+    NodeExpr* Lhs;
+    NodeExpr* Rhs;
 };
-struct NodeExprIdentifier {
-    NodeExprIdentifier() {};
-    NodeExprIdentifier(Token identifier)
-        : Identifier(identifier) {};
 
-    Token Identifier;
+struct NodeBinExpr {
+    std::variant<NodeEmpty*, NodeBinExprAdd*> Expr;
 };
+
+struct NodeTermIntLit {
+    NodeTermIntLit() = default;
+    NodeTermIntLit(Token intLiteral)
+            : IntLiteral(intLiteral) {};
+
+    Token IntLiteral{TokenType::NONE};
+};
+
+struct NodeTermIdentifier {
+    NodeTermIdentifier() = default;
+    NodeTermIdentifier(Token identifier)
+            : Identifier(identifier) {};
+
+    Token Identifier{TokenType::NONE};;
+};
+
+struct NodeTerm {
+    std::variant<NodeTermIntLit*, NodeTermIdentifier*> Term;
+};
+
 struct NodeExpr {
-    NodeExpr() {};
-    NodeExpr(std::variant<NodeEmpty, NodeExprIntLit, NodeExprIdentifier> expr)
+    NodeExpr() = default;
+    NodeExpr(std::variant<NodeEmpty*, NodeTerm*, NodeBinExpr*> expr)
         : Expr(expr) {};
 
-    std::variant<NodeEmpty, NodeExprIntLit, NodeExprIdentifier> Expr;
+    std::variant<NodeEmpty*, NodeTerm*, NodeBinExpr*> Expr;
 };
 
 struct NodeStatementExit {
-    NodeStatementExit() {};
-    NodeStatementExit(NodeExpr expr)
+    NodeStatementExit() = default;
+    NodeStatementExit(NodeExpr* expr)
             : Expr(expr) {};
-    NodeExpr Expr;
+
+    NodeExpr* Expr;
 };
 
 struct NodeStatementVarDecl {
-    NodeStatementVarDecl() {};
-    NodeStatementVarDecl(Token identifier, NodeExpr expr)
+    NodeStatementVarDecl() = default;
+    NodeStatementVarDecl(Token identifier, NodeExpr* expr)
         : Identifier(identifier), Expr(expr) {};
 
     Token Identifier;
-    NodeExpr Expr;
+    NodeExpr* Expr;
 };
 
 struct NodeStatement {
-    NodeStatement() {};
-    NodeStatement(std::variant<NodeEmpty, NodeStatementExit, NodeStatementVarDecl> statement)
+    NodeStatement() = default;
+    NodeStatement(std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*> statement)
         : Statement(statement) {};
-    std::variant<NodeEmpty, NodeStatementExit, NodeStatementVarDecl> Statement;
+    std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*> Statement;
 };
 
 struct NodeProgram {

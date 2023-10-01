@@ -14,4 +14,6 @@ add_executable(quartz-compiler src/main.cpp
         src/Parser.cpp
         src/Parser.h
         src/ParserNode.cpp
-        src/ParserNode.h)
+        src/ParserNode.h
+        src/MemoryPool.cpp
+        src/MemoryPool.h)

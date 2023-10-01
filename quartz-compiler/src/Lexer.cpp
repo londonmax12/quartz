@@ -22,12 +22,12 @@ std::vector<Token> Lexer::Tokenize() {
                 currString.clear();
                 continue;
             }
-            if (currString == "var") {
+            else if (currString == "var") {
                 tokens.push_back({TokenType::VAR});
                 currString.clear();
                 continue;
             }
-            if (currString == "int") {
+            else if (currString == "int") {
                 tokens.push_back({TokenType::VAR_INT});
                 currString.clear();
                 continue;
@@ -37,7 +37,7 @@ std::vector<Token> Lexer::Tokenize() {
             currString.clear();
             continue;
         }
-        if (std::isdigit(Peak())) {
+        else if (std::isdigit(Peak())) {
             currString += Consume();
             while (Peak() && std::isdigit(Peak())) {
                 currString += Consume();
@@ -46,32 +46,37 @@ std::vector<Token> Lexer::Tokenize() {
             currString.clear();
             continue;
         }
-        if (Peak() == ';') {
+        else if (Peak() == ';') {
             Consume();
             tokens.push_back({TokenType::ENDL});
             continue;
         }
-        if (Peak() == '(') {
+        else if (Peak() == '(') {
             Consume();
             tokens.push_back({TokenType::OPEN_PAREN});
             continue;
         }
-        if (Peak() == ')') {
+        else if (Peak() == ')') {
             Consume();
             tokens.push_back({TokenType::CLOSE_PAREN});
             continue;
         }
-        if (Peak() == '=') {
+        else if (Peak() == '=') {
             Consume();
             tokens.push_back({TokenType::EQUALS});
             continue;
         }
-        if (Peak() == ':') {
+        else if (Peak() == ':') {
             Consume();
             tokens.push_back({TokenType::COLON});
             continue;
         }
-        if (std::isspace(Peak())) {
+        else if (Peak() == '+') {
+            Consume();
+            tokens.push_back({TokenType::PLUS});
+            continue;
+        }
+        else if (std::isspace(Peak())) {
             Consume();
             continue;
         }

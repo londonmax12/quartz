@@ -1,22 +1,37 @@
 $$
 \begin{align}
-[\text{expr}] &\to \text{int\_lit} | \text{identifier}
-\\
-[\text{var\_type}] &\to 
+[\text{Term}] &\to 
     \begin{cases}
-        \text{int}
+        \text{IntLit}\\
+        \text{Identifier}\\ 
     \end{cases}
 \\
-[\text{var\_decl}] &\to \text{var}\space \text{identifier}:\space \text{var\_type} = [\text{expr}];
-\\
-[\text{exit}] &\to exit([\text{expr}]);
-\\
-[\text{stmt}] &\to
+[\text{Expr}] &\to 
     \begin{cases}
-        [\text{exit}]\\
-        [\text{var\_decl}]
+        \text{[Term]}\\
+        \text{[BinExpr]}
     \end{cases}
 \\
-[\text{program}] &\to [\text{stmt}]^+
+[\text{BinExpr}] &\to 
+    \begin{cases}
+        \text{[Expr]+[Expr]} & \text{Precedence} = 0
+    \end{cases}
+\\
+[\text{VarType}] &\to 
+    \begin{cases}
+        int
+    \end{cases}
+\\
+[\text{VarDecl}] &\to var\space \text{Identifier}:\space \text{VarType} = [\text{Expr}];
+\\
+[\text{Exit}] &\to exit([\text{Expr}]);
+\\
+[\text{Statement}] &\to
+    \begin{cases}
+        [\text{Exit}]\\
+        [\text{VarDecl}]
+    \end{cases}
+\\
+[\text{Program}] &\to [\text{Statement}]^+
 \end{align}
 $$

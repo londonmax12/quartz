@@ -3,9 +3,12 @@
 #include <iostream>
 
 Parser::Parser(std::vector<Token> tokens)
-    : m_Tokens(tokens)
-{
+    : m_Tokens(tokens), m_Pool(1024 * 1024 * 4) {
+    m_Pool.Init();
+}
 
+Parser::~Parser() {
+    m_Pool.Free();
 }
 
 Token Parser::Peak(int offset) {
@@ -16,11 +19,11 @@ Token Parser::Peak(int offset) {
 }
 
 Token Parser::Consume(int amount) {
-    Token lastToken;
+    int index = 0;
     for(int i = 0; i < amount; i++) {
-        lastToken = m_Tokens[m_Index++];
+        index = m_Index++;
     }
-    return lastToken;
+    return m_Tokens[index];
 }
 
 NodeProgram Parser::ParseProgram() {
@@ -28,7 +31,7 @@ NodeProgram Parser::ParseProgram() {
     while (Peak().GetType() != TokenType::NONE)
     {
         NodeStatement statement = ParseStatement();
-        if (std::holds_alternative<NodeEmpty>(statement.Statement)) {
+        if (std::holds_alternative<NodeEmpty*>(statement.Statement)) {
             std::cerr << "Invalid statement\n";
             exit(1);
         }
@@ -37,14 +40,57 @@ NodeProgram Parser::ParseProgram() {
     return nodeProgram;
 }
 
-NodeExpr Parser::ParseExpr() {
+NodeTerm* Parser::ParseTerm() {
+    NodeTerm* nodeTerm = nullptr;
+
     if (Peak().GetType() == TokenType::INT_LIT) {
-        return NodeExpr(NodeExprIntLit(Consume()));
+        nodeTerm = m_Pool.Allocate<NodeTerm>();
+        NodeTermIntLit* nodeTermIntLit = m_Pool.Allocate<NodeTermIntLit>();
+        Token token = Consume();
+        nodeTermIntLit->IntLiteral = token;
+        nodeTerm->Term = nodeTermIntLit;
     }
-    if (Peak().GetType() == TokenType::IDENTIFIER) {
-        return NodeExpr(NodeExprIdentifier{Consume()});
+    else if (Peak().GetType() == TokenType::IDENTIFIER) {
+        nodeTerm = m_Pool.Allocate<NodeTerm>();
+        NodeTermIdentifier* nodeTermIdentifier = m_Pool.Allocate<NodeTermIdentifier>();
+        Token token = Consume();
+        nodeTermIdentifier->Identifier = token;
+        nodeTerm->Term = nodeTermIdentifier;
     }
-    return NodeExpr(NodeEmpty{});
+
+    return nodeTerm;
+}
+
+NodeExpr* Parser::ParseExpr() {
+    NodeExpr* nodeExpr = nullptr;
+
+    NodeTerm* nodeTerm = ParseTerm();
+    if (nodeTerm) {
+        nodeExpr = m_Pool.Allocate<NodeExpr>();
+        if (Peak().GetType() == TokenType::PLUS) {
+            NodeBinExpr* nodeBinExpr = m_Pool.Allocate<NodeBinExpr>();
+            NodeBinExprAdd* nodeBinExprAdd =  m_Pool.Allocate<NodeBinExprAdd>();
+            NodeExpr* nodeExprLhs = m_Pool.Allocate<NodeExpr>();
+            nodeExprLhs->Expr = nodeTerm;
+            nodeBinExprAdd->Lhs = nodeExprLhs;
+
+            Consume();
+            NodeExpr* nodeExprRhs = ParseExpr();
+            if (!nodeExprRhs) {
+                std::cerr << "Expected expression\n";
+                exit(1);
+            }
+            nodeBinExprAdd->Rhs = nodeExprRhs;
+            nodeBinExpr->Expr = nodeBinExprAdd;
+
+            nodeExpr->Expr = nodeBinExpr;
+        }
+        else {
+            nodeExpr->Expr = nodeTerm;
+        }
+    }
+
+    return nodeExpr;
 }
 
 NodeStatement Parser::ParseStatement() {
@@ -56,13 +102,14 @@ NodeStatement Parser::ParseStatement() {
             }
             Consume(2);
 
-            NodeStatementExit nodeExit;
-            NodeExpr nodeExpr = ParseExpr();
-            if (std::holds_alternative<NodeEmpty>(nodeExpr.Expr)) {
+            NodeExpr* nodeExpr = ParseExpr();
+            if (std::holds_alternative<NodeEmpty*>(nodeExpr->Expr)) {
                 std::cerr << "Invalid expression\n";
                 exit(1);
             }
-            nodeExit = NodeStatementExit(nodeExpr.Expr);
+
+            NodeStatementExit* nodeExit = m_Pool.Allocate<NodeStatementExit>();
+            nodeExit->Expr = nodeExpr;
 
             if (Peak().GetType() != TokenType::CLOSE_PAREN) {
                 std::cerr << "Expected \')\'\n";
@@ -80,6 +127,7 @@ NodeStatement Parser::ParseStatement() {
         }
         case TokenType::VAR: {
             Consume();
+
             if (Peak().GetType() != TokenType::IDENTIFIER) {
                 std::cerr << "Expected identifier\n";
                 exit(1);
@@ -100,13 +148,16 @@ NodeStatement Parser::ParseStatement() {
             Token varIdentifier = Consume();
             Consume(3);
 
-            NodeExpr varExpr = ParseExpr().Expr;
+            NodeExpr* varExpr = ParseExpr();
 
-            if (std::holds_alternative<NodeEmpty>(varExpr.Expr)) {
+            if (std::holds_alternative<NodeEmpty*>(varExpr->Expr)) {
                 std::cerr << "Expected expression\n";
                 exit(1);
             }
-            NodeStatementVarDecl varDecl{varIdentifier, varExpr};
+
+            NodeStatementVarDecl* varDecl = m_Pool.Allocate<NodeStatementVarDecl>();
+            varDecl->Identifier = varIdentifier;
+            varDecl->Expr = varExpr;
 
             if (Peak().GetType() != TokenType::ENDL) {
                 std::cerr << "Expected \';\'\n";
@@ -118,7 +169,7 @@ NodeStatement Parser::ParseStatement() {
         }
         default: {
             Consume();
-            return NodeStatement{NodeEmpty{}};
+            return NodeStatement{(NodeEmpty*)nullptr};
         }
     }
 }

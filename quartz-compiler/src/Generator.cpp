@@ -6,8 +6,8 @@ std::string Generator::GenerateProgram() {
     m_Out << "global _start\n";
     m_Out << "_start:\n";
 
-    for (const auto& statement : m_Source.Statements) {
-        GenerateStatement(statement);
+    for (auto& statement : m_Source.Statements) {
+        GenerateStatement(&statement);
     }
 
     m_Out << "    mov rax, 60\n";
@@ -22,64 +22,70 @@ Generator::Generator(NodeProgram source)
 {
 
 }
+void Generator::GenerateStatement(NodeStatement* statementNode) {
+    auto& statement = statementNode->Statement;
 
-void Generator::GenerateStatement(const NodeStatement& statement) {
+    if (std::holds_alternative<NodeEmpty*>(statement)) {
 
-    struct StatementVisitor {
-        Generator* generator;
-        StatementVisitor(Generator* gen)
-            : generator(gen) {};
-
-        void operator()(const NodeEmpty&) {
-
+    }
+    else if (std::holds_alternative<NodeStatementExit*>(statement)) {
+        GenerateExpr(std::get<NodeStatementExit*>(statement)->Expr);
+        m_Out << "    mov rax, 60\n";
+        Pop("rdi");
+        m_Out << "    syscall\n";
+    }
+    else if (std::holds_alternative<NodeStatementVarDecl*>(statement)) {
+        NodeStatementVarDecl* statementVarDecl = std::get<NodeStatementVarDecl*>(statement);
+        std::string identifier = statementVarDecl->Identifier.GetValue();
+        if (m_Variables.find(identifier) != m_Variables.end()) {
+            std::cerr << "Identifier already defined: " << statementVarDecl->Identifier.GetValue() << "\n";
+            exit(1);
         }
-        void operator()(const NodeStatementExit& statementExit) {
-            generator->GenerateExpr(statementExit.Expr);
-            generator->m_Out << "    mov rax, 60\n";
-            generator->Pop("rdi");
-            generator->m_Out << "    syscall\n";
-        }
-        void operator()(const NodeStatementVarDecl& statementVarDecl) {
-            if (generator->m_Variables.find(statementVarDecl.Identifier.GetValue()) != generator->m_Variables.end()) {
-                std::cerr << "Identifier already defined: " << statementVarDecl.Identifier.GetValue() << "\n";
-                exit(1);
-            }
-            generator->m_Variables.insert({statementVarDecl.Identifier.GetValue(), Variable(generator->m_StackSize)});
-            generator->GenerateExpr(statementVarDecl.Expr);
-        }
-    };
-
-    StatementVisitor visitor{this};
-    std::visit(visitor, statement.Statement);
+        m_Variables.insert({statementVarDecl->Identifier.GetValue(), Variable(m_StackSize)});
+        GenerateExpr(statementVarDecl->Expr);
+    }
 }
 
-void Generator::GenerateExpr(const NodeExpr &expr) {
-    struct ExprVisitor {
-        Generator* generator;
-        ExprVisitor(Generator* gen)
-            : generator(gen) {};
-
-        void operator()(const NodeEmpty&) {
-
+void Generator::GenerateTerm(NodeTerm* term) {
+    if (std::holds_alternative<NodeTermIntLit*>(term->Term)) {
+        m_Out << "    mov rax, " << std::get<NodeTermIntLit*>(term->Term)->IntLiteral.GetValue() << "\n";
+        Push("rax");
+    }
+    else if (std::holds_alternative<NodeTermIdentifier*>(term->Term)) {
+        NodeTermIdentifier* nodeTermIdentifier = std::get<NodeTermIdentifier*>(term->Term);
+        if (m_Variables.find(nodeTermIdentifier->Identifier.GetValue()) == m_Variables.end()) {
+            std::cerr << "Undeclared variable: " << nodeTermIdentifier->Identifier.GetValue() << "\n";
+            exit(1);
         }
-        void operator()(const NodeExprIdentifier& exprIdentifier) {
-            if (generator->m_Variables.find(exprIdentifier.Identifier.GetValue()) == generator->m_Variables.end()) {
-                std::cerr << "Undeclared variable: " << exprIdentifier.Identifier.GetValue() << "\n";
-                exit(1);
-            }
-            const auto& var = generator->m_Variables.at(exprIdentifier.Identifier.GetValue());
-            std::stringstream offset;
-            offset << "QWORD [rsp + " << (generator->m_StackSize - var.StackLocation - 1) * 8 << "]\n";
-            generator->Push(offset.str());
-        }
-        void operator()(const NodeExprIntLit& exprIntLit) {
-            generator->m_Out << "    mov rax, " << exprIntLit.IntLiteral.GetValue() << "\n";
-            generator->Push("rax");
-        }
-    };
+        const auto& var = m_Variables.at(nodeTermIdentifier->Identifier.GetValue());
+        std::stringstream offset;
+        offset << "QWORD [rsp + " << (m_StackSize - var.StackLocation - 1) * 8 << "]\n";
+        Push(offset.str());
+    }
+}
 
-    ExprVisitor visitor{this};
-    std::visit(visitor, expr.Expr);
+void Generator::GenerateExpr(NodeExpr* exprNode) {
+    auto& expr = exprNode->Expr;
+    if (std::holds_alternative<NodeEmpty*>(expr)) {
+
+    }
+    else if (std::holds_alternative<NodeBinExpr*>(expr)) {
+        NodeBinExpr* nodeBinExpr = std::get<NodeBinExpr*>(expr);
+        if (std::holds_alternative<NodeBinExprAdd*>(nodeBinExpr->Expr)) {
+            NodeBinExprAdd* nodeAdd = std::get<NodeBinExprAdd*>(nodeBinExpr->Expr);
+            
+            GenerateExpr(nodeAdd->Lhs);
+            GenerateExpr(nodeAdd->Rhs);
+
+            Pop("rax");
+            Pop("rbx");
+            m_Out << "    add rax, rbx\n";
+            Push("rax");
+        }
+    }
+    else if (std::holds_alternative<NodeTerm*>(expr)) {
+        GenerateTerm(std::get<NodeTerm*>(expr));
+    }
 }
 
 void Generator::Push(const std::string &reg) {

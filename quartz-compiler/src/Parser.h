@@ -5,20 +5,26 @@
 
 #include "Token.h"
 #include "ParserNode.h"
+#include "MemoryPool.h"
 
 class Parser {
 public:
     Parser(std::vector<Token> tokens);
+    ~Parser();
 
     NodeProgram ParseProgram();
 private:
     std::vector<Token> m_Tokens;
     int m_Index = 0;
 
+    MemoryPool m_Pool;
+
     Token Peak(int offset = 0);
     Token Consume(int amount = 1);
 
-    NodeExpr ParseExpr();
+    NodeExpr* ParseExpr();
+    NodeTerm* ParseTerm();
+    NodeBinExpr* ParseBinExpr();
     NodeStatement ParseStatement();
 };
 
