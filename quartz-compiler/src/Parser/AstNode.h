@@ -13,27 +13,27 @@ namespace Quartz {
     struct NodeExpr;
 
     struct NodeBinExprAdd {
-        NodeExpr *Lhs;
-        NodeExpr *Rhs;
+        NodeExpr* Lhs;
+        NodeExpr* Rhs;
     };
 
     struct NodeBinExprMulti {
-        NodeExpr *Lhs;
-        NodeExpr *Rhs;
+        NodeExpr* Lhs;
+        NodeExpr* Rhs;
     };
 
     struct NodeBinExprSub {
-        NodeExpr *Lhs;
-        NodeExpr *Rhs;
+        NodeExpr* Lhs;
+        NodeExpr* Rhs;
     };
 
     struct NodeBinExprDiv {
-        NodeExpr *Lhs;
-        NodeExpr *Rhs;
+        NodeExpr* Lhs;
+        NodeExpr* Rhs;
     };
 
     struct NodeBinExpr {
-        std::variant<NodeEmpty *, NodeBinExprAdd *, NodeBinExprSub *, NodeBinExprMulti *, NodeBinExprDiv *> Expr;
+        std::variant<NodeEmpty* , NodeBinExprAdd*, NodeBinExprSub*, NodeBinExprMulti*, NodeBinExprDiv*> Expr;
     };
 
     struct NodeTermIntLit {
@@ -60,20 +60,20 @@ namespace Quartz {
         NodeTermParen(NodeExpr *expr)
                 : Expr(expr) {};
 
-        NodeExpr *Expr;
+        NodeExpr* Expr;
     };
 
     struct NodeTerm {
-        std::variant<NodeTermIntLit *, NodeTermIdentifier *, NodeTermParen *> Term;
+        std::variant<NodeTermIntLit*, NodeTermIdentifier*, NodeTermParen*> Term;
     };
 
     struct NodeExpr {
         NodeExpr() = default;
 
-        NodeExpr(std::variant<NodeEmpty *, NodeTerm *, NodeBinExpr *> expr)
+        NodeExpr(std::variant<NodeEmpty*, NodeTerm*, NodeBinExpr*> expr)
                 : Expr(expr) {};
 
-        std::variant<NodeEmpty *, NodeTerm *, NodeBinExpr *> Expr;
+        std::variant<NodeEmpty*, NodeTerm*, NodeBinExpr*> Expr;
     };
 
     struct NodeStatementExit {
@@ -82,34 +82,35 @@ namespace Quartz {
         NodeStatementExit(NodeExpr *expr)
                 : Expr(expr) {};
 
-        NodeExpr *Expr;
+        NodeExpr* Expr;
     };
 
     struct NodeStatementVarDecl {
         NodeStatementVarDecl() = default;
 
-        NodeStatementVarDecl(Token identifier, NodeExpr *expr)
+        NodeStatementVarDecl(Token identifier, NodeExpr* expr)
                 : Identifier(identifier), Expr(expr) {};
 
         Token Identifier;
-        NodeExpr *Expr;
+        NodeExpr* Expr;
     };
 
-    struct NodeStatementScope {
+    struct NodeStatement;
 
+    struct NodeStatementScope {
+        std::vector<NodeStatement*> Statements;
     };
 
     struct NodeStatement {
         NodeStatement() = default;
 
-        NodeStatement(
-                std::variant<NodeEmpty *, NodeStatementExit *, NodeStatementVarDecl *, NodeStatementScope *> statement)
+        NodeStatement(std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeStatementScope*> statement)
                 : Statement(statement) {};
-        std::variant<NodeEmpty *, NodeStatementExit *, NodeStatementVarDecl *, NodeStatementScope *> Statement;
+        std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeStatementScope*> Statement;
     };
 
     struct NodeProgram {
-        std::vector<NodeStatement> Statements;
+        std::vector<NodeStatement*> Statements;
     };
 }
 

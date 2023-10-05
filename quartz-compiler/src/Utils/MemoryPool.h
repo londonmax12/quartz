@@ -9,10 +9,10 @@ namespace Quartz {
         MemoryPool(size_t bytes);
 
         template<typename T>
-        T *Allocate() {
-            std::byte *offset = m_Offset;
+        T* Allocate() {
+            std::byte* offset = m_Offset;
             m_Offset += sizeof(T);
-            T *typedPointer = new(offset) T;
+            T* typedPointer = new(offset) T;
             return typedPointer;
         }
 
@@ -27,8 +27,8 @@ namespace Quartz {
     private:
         size_t m_Size;
 
-        std::byte *m_Buffer = nullptr;
-        std::byte *m_Offset = nullptr;
+        std::byte* m_Buffer = nullptr;
+        std::byte* m_Offset = nullptr;
     };
 }
 

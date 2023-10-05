@@ -31,8 +31,8 @@ namespace Quartz {
         NodeProgram nodeProgram;
         while (Peak().IsValid())
         {
-            NodeStatement statement = ParseStatement();
-            if (std::holds_alternative<NodeEmpty*>(statement.Statement)) {
+            NodeStatement* statement = ParseStatement();
+            if (!statement) {
                 std::cerr << "Invalid statement\n";
                 exit(1);
             }
@@ -165,7 +165,7 @@ namespace Quartz {
         return nodeExprLhs;
     }
 
-    NodeStatement Parser::ParseStatement() {
+    NodeStatement* Parser::ParseStatement() {
         switch (Peak().GetType()) {
             case TokenType::EXIT: {
                 if (Peak(1).GetType() != TokenType::OPEN_PAREN) {
@@ -195,7 +195,9 @@ namespace Quartz {
                 }
                 Consume();
 
-                return NodeStatement{nodeExit};
+                NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
+                statement->Statement = nodeExit;
+                return statement;
             }
             case TokenType::VAR: {
                 Consume();
@@ -237,11 +239,33 @@ namespace Quartz {
                 }
                 Consume();
 
-                return NodeStatement{varDecl};
+                NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
+                statement->Statement = varDecl;
+                return statement;
+            }
+            case TokenType::OPEN_CURLY: {
+                Consume();
+
+                NodeStatementScope* scope = m_Pool.Allocate<NodeStatementScope>();
+
+                NodeStatement* nodeStatement = ParseStatement();
+                while (nodeStatement) {
+                    scope->Statements.push_back(nodeStatement);
+                    nodeStatement = ParseStatement();
+                }
+
+                if (Peak().GetType() != TokenType::CLOSE_CURLY) {
+                    std::cerr << "Expected \'}\'\n";
+                    exit(1);
+                }
+                Consume();
+
+                NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
+                statement->Statement = scope;
+                return statement;
             }
             default: {
-                Consume();
-                return NodeStatement{(NodeEmpty*)nullptr};
+                return nullptr;
             }
         }
     }

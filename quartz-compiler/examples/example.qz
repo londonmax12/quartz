@@ -1,4 +1,10 @@
-var x: int = 5;
-var y: int = 10;
-var z: int = (x + y) * 2;
-exit(x);
+var x: int = 50;
+{
+    var y: int = 10;
+    {
+        var z: int = 5;
+        exit(z);
+    }
+}
+var y: int = x * 2;
+exit(y);

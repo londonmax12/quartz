@@ -33,7 +33,8 @@ $$
 [\text{Statement}] &\to
     \begin{cases}
         [\text{Exit}]\\
-        [\text{VarDecl}]
+        [\text{VarDecl}]\\
+        \{[\text{Statement}^*]\}
     \end{cases}
 \\
 [\text{Program}] &\to [\text{Statement}]^+

@@ -22,9 +22,6 @@ namespace Quartz {
         void GenerateStatement(NodeStatement* statement);
         void GenerateTerm(NodeTerm* term);
 
-        void Push(const std::string& reg);
-        void Pop(const std::string& reg);
-
         NodeProgram m_Source;
         std::stringstream m_Out;
 
