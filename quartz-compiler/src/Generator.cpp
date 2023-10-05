@@ -62,26 +62,68 @@ void Generator::GenerateTerm(NodeTerm* term) {
         offset << "QWORD [rsp + " << (m_StackSize - var.StackLocation - 1) * 8 << "]\n";
         Push(offset.str());
     }
+    else if (std::holds_alternative<NodeTermParen*>(term->Term)) {
+        NodeTermParen* nodeTermParen = std::get<NodeTermParen*>(term->Term);
+        GenerateExpr(nodeTermParen->Expr);
+    }
+}
+
+void Generator::GenerateBinExpr(NodeBinExpr* expr) {
+    auto binExpr = expr->Expr;
+    if (std::holds_alternative<NodeBinExprAdd*>(binExpr)) {
+        NodeBinExprAdd* nodeAdd = std::get<NodeBinExprAdd*>(binExpr);
+
+        GenerateExpr(nodeAdd->Rhs);
+        GenerateExpr(nodeAdd->Lhs);
+
+        Pop("rax");
+        Pop("rbx");
+        m_Out << "    add rax, rbx\n";
+        Push("rax");
+    }
+    else if (std::holds_alternative<NodeBinExprMulti*>(binExpr)) {
+        NodeBinExprMulti* nodeMulti = std::get<NodeBinExprMulti*>(binExpr);
+
+        GenerateExpr(nodeMulti->Rhs);
+        GenerateExpr(nodeMulti->Lhs);
+
+        Pop("rax");
+        Pop("rbx");
+        m_Out << "    imul rbx\n";
+        Push("rax");
+    }
+    else if (std::holds_alternative<NodeBinExprSub*>(binExpr)) {
+        NodeBinExprSub* nodeSub = std::get<NodeBinExprSub*>(binExpr);
+
+        GenerateExpr(nodeSub->Rhs);
+        GenerateExpr(nodeSub->Lhs);
+
+        Pop("rax");
+        Pop("rbx");
+        m_Out << "    sub rax, rbx\n";
+        Push("rax");
+    }
+    else if (std::holds_alternative<NodeBinExprDiv*>(binExpr)) {
+        NodeBinExprDiv* nodeDiv = std::get<NodeBinExprDiv*>(binExpr);
+
+        GenerateExpr(nodeDiv->Rhs);
+        GenerateExpr(nodeDiv->Lhs);
+
+        Pop("rax");
+        Pop("rbx");
+        m_Out << "    div rbx\n";
+        Push("rax");
+    }
 }
 
 void Generator::GenerateExpr(NodeExpr* exprNode) {
-    auto& expr = exprNode->Expr;
+    auto expr = exprNode->Expr;
     if (std::holds_alternative<NodeEmpty*>(expr)) {
 
     }
     else if (std::holds_alternative<NodeBinExpr*>(expr)) {
         NodeBinExpr* nodeBinExpr = std::get<NodeBinExpr*>(expr);
-        if (std::holds_alternative<NodeBinExprAdd*>(nodeBinExpr->Expr)) {
-            NodeBinExprAdd* nodeAdd = std::get<NodeBinExprAdd*>(nodeBinExpr->Expr);
-            
-            GenerateExpr(nodeAdd->Lhs);
-            GenerateExpr(nodeAdd->Rhs);
-
-            Pop("rax");
-            Pop("rbx");
-            m_Out << "    add rax, rbx\n";
-            Push("rax");
-        }
+        GenerateBinExpr(nodeBinExpr);
     }
     else if (std::holds_alternative<NodeTerm*>(expr)) {
         GenerateTerm(std::get<NodeTerm*>(expr));

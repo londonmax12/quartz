@@ -6,6 +6,15 @@
 #include "Parser.h"
 #include "Generator.h"
 
+void PrintTokens(std::vector<Token>& tokens) {
+    for (auto& token : tokens) {
+        std::cout << "[" << token.Str() << "]";
+        if (token.GetType() == TokenType::ENDL) {
+            std::cout << "\n";
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Incorrect usage: example {input file}\n";
@@ -33,6 +42,8 @@ int main(int argc, char* argv[]) {
     std::cout << "Performing lexical analysis...\n";
     Lexer lexer{inputStr};
     std::vector<Token> tokens = lexer.Tokenize();
+
+    PrintTokens(tokens);
 
     std::cout << "Parsing tokens...\n";
     Parser parser{tokens};

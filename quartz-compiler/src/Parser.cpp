@@ -28,7 +28,7 @@ Token Parser::Consume(int amount) {
 
 NodeProgram Parser::ParseProgram() {
     NodeProgram nodeProgram;
-    while (Peak().GetType() != TokenType::NONE)
+    while (Peak().IsValid())
     {
         NodeStatement statement = ParseStatement();
         if (std::holds_alternative<NodeEmpty*>(statement.Statement)) {
@@ -42,55 +42,126 @@ NodeProgram Parser::ParseProgram() {
 
 NodeTerm* Parser::ParseTerm() {
     NodeTerm* nodeTerm = nullptr;
+    TokenType term =  Peak().GetType();
+    switch (term) {
+        case TokenType::INT_LIT: {
+            nodeTerm = m_Pool.Allocate<NodeTerm>();
+            NodeTermIntLit* nodeTermIntLit = m_Pool.Allocate<NodeTermIntLit>();
+            Token token = Consume();
+            nodeTermIntLit->IntLiteral = token;
+            nodeTerm->Term = nodeTermIntLit;
+            break;
+        }
+        case TokenType::IDENTIFIER: {
+            nodeTerm = m_Pool.Allocate<NodeTerm>();
+            NodeTermIdentifier* nodeTermIdentifier = m_Pool.Allocate<NodeTermIdentifier>();
+            Token token = Consume();
+            nodeTermIdentifier->Identifier = token;
+            nodeTerm->Term = nodeTermIdentifier;
+            break;
+        }
+        case TokenType::OPEN_PAREN: {
+            Token token = Consume();
+            NodeExpr* nodeExpr = ParseExpr();
+            nodeTerm = m_Pool.Allocate<NodeTerm>();
 
-    if (Peak().GetType() == TokenType::INT_LIT) {
-        nodeTerm = m_Pool.Allocate<NodeTerm>();
-        NodeTermIntLit* nodeTermIntLit = m_Pool.Allocate<NodeTermIntLit>();
-        Token token = Consume();
-        nodeTermIntLit->IntLiteral = token;
-        nodeTerm->Term = nodeTermIntLit;
-    }
-    else if (Peak().GetType() == TokenType::IDENTIFIER) {
-        nodeTerm = m_Pool.Allocate<NodeTerm>();
-        NodeTermIdentifier* nodeTermIdentifier = m_Pool.Allocate<NodeTermIdentifier>();
-        Token token = Consume();
-        nodeTermIdentifier->Identifier = token;
-        nodeTerm->Term = nodeTermIdentifier;
+            if (!nodeExpr) {
+                std::cerr << "Expected expression\n";
+                exit(1);
+            }
+
+            if (Peak().GetType() != TokenType::CLOSE_PAREN) {
+                std::cerr << "Expected \')\'\n";
+                exit(1);
+            }
+
+            Consume();
+
+            NodeTermParen* nodeTermParen = m_Pool.Allocate<NodeTermParen>();
+            nodeTermParen->Expr = nodeExpr;
+            nodeTerm->Term = nodeTermParen;
+            break;
+        }
+        default:
+            break;
     }
 
     return nodeTerm;
 }
 
-NodeExpr* Parser::ParseExpr() {
+NodeExpr* Parser::ParseExpr(int minPrec) {
     NodeExpr* nodeExpr = nullptr;
+    NodeTerm* nodeTermLhs = ParseTerm();
 
-    NodeTerm* nodeTerm = ParseTerm();
-    if (nodeTerm) {
-        nodeExpr = m_Pool.Allocate<NodeExpr>();
-        if (Peak().GetType() == TokenType::PLUS) {
-            NodeBinExpr* nodeBinExpr = m_Pool.Allocate<NodeBinExpr>();
-            NodeBinExprAdd* nodeBinExprAdd =  m_Pool.Allocate<NodeBinExprAdd>();
-            NodeExpr* nodeExprLhs = m_Pool.Allocate<NodeExpr>();
-            nodeExprLhs->Expr = nodeTerm;
-            nodeBinExprAdd->Lhs = nodeExprLhs;
+    if (!nodeTermLhs)
+        return nodeExpr;
 
-            Consume();
-            NodeExpr* nodeExprRhs = ParseExpr();
-            if (!nodeExprRhs) {
-                std::cerr << "Expected expression\n";
-                exit(1);
+    NodeExpr* nodeExprLhs = m_Pool.Allocate<NodeExpr>();
+    nodeExprLhs->Expr = nodeTermLhs;
+
+    while (true) {
+        Token currToken = Peak();
+        int prec = 0;
+
+        if (!currToken.IsValid() || !currToken.IsBinOperator()) {
+            prec = currToken.GetBinPrec();
+            if (prec == -1 || prec < minPrec)
+                break;
+        } else {
+            prec = currToken.GetBinPrec();
+            if (prec < minPrec)
+                break;
+        }
+
+        Token token = Consume();
+        int nextMinPrec = prec + 1;
+        NodeExpr* nodeExprRhs = ParseExpr(nextMinPrec);
+
+        if (!nodeExprRhs) {
+            std::cerr << "Failed to parse expression\n";
+        }
+
+        NodeBinExpr* binExpr = m_Pool.Allocate<NodeBinExpr>();
+        NodeExpr* nodeExprLhs2 = m_Pool.Allocate<NodeExpr>();
+        switch (token.GetType()) {
+            case TokenType::PLUS: {
+                NodeBinExprAdd* nodeBinAdd = m_Pool.Allocate<NodeBinExprAdd>();
+                nodeExprLhs2->Expr = nodeExprLhs->Expr;
+                nodeBinAdd->Lhs = nodeExprLhs2;
+                nodeBinAdd->Rhs = nodeExprRhs;
+                binExpr->Expr = nodeBinAdd;
+                break;
             }
-            nodeBinExprAdd->Rhs = nodeExprRhs;
-            nodeBinExpr->Expr = nodeBinExprAdd;
+            case TokenType::MULTI: {
+                NodeBinExprMulti* nodeBinMulti = m_Pool.Allocate<NodeBinExprMulti>();
+                nodeExprLhs2->Expr = nodeExprLhs->Expr;
+                nodeBinMulti->Lhs = nodeExprLhs2;
+                nodeBinMulti->Rhs = nodeExprRhs;
+                binExpr->Expr = nodeBinMulti;
+                break;
+            }
+            case TokenType::DIV: {
+                NodeBinExprDiv* nodeBinDiv = m_Pool.Allocate<NodeBinExprDiv>();
+                nodeExprLhs2->Expr = nodeExprLhs->Expr;
+                nodeBinDiv->Lhs = nodeExprLhs2;
+                nodeBinDiv->Rhs = nodeExprRhs;
+                binExpr->Expr = nodeBinDiv;
+                break;
+            }
+            case TokenType::SUB: {
+                NodeBinExprSub* nodeBinSub = m_Pool.Allocate<NodeBinExprSub>();
+                nodeExprLhs2->Expr = nodeExprLhs->Expr;
+                nodeBinSub->Lhs = nodeExprLhs2;
+                nodeBinSub->Rhs = nodeExprRhs;
+                binExpr->Expr = nodeBinSub;
+                break;
+            }
+        }
 
-            nodeExpr->Expr = nodeBinExpr;
-        }
-        else {
-            nodeExpr->Expr = nodeTerm;
-        }
+        nodeExprLhs->Expr = binExpr;
     }
 
-    return nodeExpr;
+    return nodeExprLhs;
 }
 
 NodeStatement Parser::ParseStatement() {

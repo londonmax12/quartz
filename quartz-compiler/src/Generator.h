@@ -16,6 +16,7 @@ public:
     std::string GenerateProgram();
 private:
     void GenerateExpr(NodeExpr* expr);
+    void GenerateBinExpr(NodeBinExpr* expr);
     void GenerateStatement(NodeStatement* statement);
     void GenerateTerm(NodeTerm* term);
 

@@ -15,8 +15,23 @@ struct NodeBinExprAdd {
     NodeExpr* Rhs;
 };
 
+struct NodeBinExprMulti {
+    NodeExpr* Lhs;
+    NodeExpr* Rhs;
+};
+
+struct NodeBinExprSub {
+        NodeExpr* Lhs;
+        NodeExpr* Rhs;
+};
+
+struct NodeBinExprDiv {
+        NodeExpr* Lhs;
+        NodeExpr* Rhs;
+};
+
 struct NodeBinExpr {
-    std::variant<NodeEmpty*, NodeBinExprAdd*> Expr;
+    std::variant<NodeEmpty*, NodeBinExprAdd*, NodeBinExprSub*, NodeBinExprMulti*, NodeBinExprDiv*> Expr;
 };
 
 struct NodeTermIntLit {
@@ -35,8 +50,16 @@ struct NodeTermIdentifier {
     Token Identifier{TokenType::NONE};;
 };
 
+struct NodeTermParen {
+    NodeTermParen() = default;
+    NodeTermParen(NodeExpr* expr)
+        : Expr(expr) {};
+
+    NodeExpr* Expr;
+};
+
 struct NodeTerm {
-    std::variant<NodeTermIntLit*, NodeTermIdentifier*> Term;
+    std::variant<NodeTermIntLit*, NodeTermIdentifier*, NodeTermParen*> Term;
 };
 
 struct NodeExpr {

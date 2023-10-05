@@ -38,6 +38,7 @@ std::vector<Token> Lexer::Tokenize() {
             continue;
         }
         else if (std::isdigit(Peak())) {
+            currString.clear();
             currString += Consume();
             while (Peak() && std::isdigit(Peak())) {
                 currString += Consume();
@@ -74,6 +75,21 @@ std::vector<Token> Lexer::Tokenize() {
         else if (Peak() == '+') {
             Consume();
             tokens.push_back({TokenType::PLUS});
+            continue;
+        }
+        else if (Peak() == '*') {
+            Consume();
+            tokens.push_back({TokenType::MULTI});
+            continue;
+        }
+        else if (Peak() == '-') {
+            Consume();
+            tokens.push_back({TokenType::SUB});
+            continue;
+        }
+        else if (Peak() == '/') {
+            Consume();
+            tokens.push_back({TokenType::DIV});
             continue;
         }
         else if (std::isspace(Peak())) {

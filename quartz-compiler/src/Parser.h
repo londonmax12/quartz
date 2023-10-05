@@ -22,7 +22,8 @@ private:
     Token Peak(int offset = 0);
     Token Consume(int amount = 1);
 
-    NodeExpr* ParseExpr();
+
+    NodeExpr* ParseExpr(int minPrec = 0);
     NodeTerm* ParseTerm();
     NodeBinExpr* ParseBinExpr();
     NodeStatement ParseStatement();

@@ -14,7 +14,10 @@ enum TokenType {
     VAR_INT,
     EQUALS,
     PLUS,
+    MULTI,
     COLON,
+    SUB,
+    DIV,
     NONE
 };
 
@@ -25,6 +28,18 @@ public:
 
     TokenType GetType() { return m_Type; }
     std::string GetValue() { return m_Value; }
+
+    bool IsValid();
+
+    bool IsBinOperator();
+    static bool IsBinOperator(TokenType type);
+
+    int GetBinPrec();
+    static int GetBinPrec(TokenType type);
+
+    bool HasBinPrec();
+
+    std::string Str();
 private:
     TokenType m_Type;
     std::string m_Value;

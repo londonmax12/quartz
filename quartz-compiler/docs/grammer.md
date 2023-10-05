@@ -3,7 +3,8 @@ $$
 [\text{Term}] &\to 
     \begin{cases}
         \text{IntLit}\\
-        \text{Identifier}\\ 
+        \text{Identifier}\\
+        (\text{[Expr]})
     \end{cases}
 \\
 [\text{Expr}] &\to 
@@ -14,7 +15,10 @@ $$
 \\
 [\text{BinExpr}] &\to 
     \begin{cases}
-        \text{[Expr]+[Expr]} & \text{Precedence} = 0
+        \text{[Expr]*[Expr]} & \text{Precedence} = 1\\
+        \text{[Expr]/[Expr]} & \text{Precedence} = 1\\
+        \text{[Expr]+[Expr]} & \text{Precedence} = 0\\
+        \text{[Expr]-[Expr]} & \text{Precedence} = 0
     \end{cases}
 \\
 [\text{VarType}] &\to 
