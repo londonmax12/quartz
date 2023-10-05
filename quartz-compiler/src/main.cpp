@@ -2,14 +2,14 @@
 #include <fstream>
 #include <string>
 
-#include "Lexer.h"
-#include "Parser.h"
-#include "Generator.h"
+#include "Lexer/Lexer.h"
+#include "Parser/Parser.h"
+#include "Generator/Generator.h"
 
-void PrintTokens(std::vector<Token>& tokens) {
+void PrintTokens(std::vector<Quartz::Token>& tokens) {
     for (auto& token : tokens) {
         std::cout << "[" << token.Str() << "]";
-        if (token.GetType() == TokenType::ENDL) {
+        if (token.GetType() == Quartz::TokenType::ENDL) {
             std::cout << "\n";
         }
     }
@@ -40,17 +40,15 @@ int main(int argc, char* argv[]) {
         free(buffer);
     }
     std::cout << "Performing lexical analysis...\n";
-    Lexer lexer{inputStr};
-    std::vector<Token> tokens = lexer.Tokenize();
-
-    PrintTokens(tokens);
+    Quartz::Lexer lexer{inputStr};
+    std::vector<Quartz::Token> tokens = lexer.Tokenize();
 
     std::cout << "Parsing tokens...\n";
-    Parser parser{tokens};
-    NodeProgram exitNode = parser.ParseProgram();
+    Quartz::Parser parser{tokens};
+    Quartz::NodeProgram exitNode = parser.ParseProgram();
 
     std::cout << "Generating assembly sources...\n";
-    Generator generator{exitNode};
+    Quartz::Generator generator{exitNode};
     std::string outASM = generator.GenerateProgram();
 
     std::fstream outputFile{"out.asm", std::ios::out};
