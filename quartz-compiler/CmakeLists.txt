@@ -1,20 +1,38 @@
 cmake_minimum_required(VERSION 3.20)
 
+set(CMAKE_SUPPRESS_REGENERATION true)
+
 project(quartz)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(quartz-compiler src/main.cpp
-        src/Lexer/Lexer.cpp
-        src/Lexer/Lexer.h
-        src/Lexer/Token.cpp
-        src/Lexer/Token.h
-        src/Generator/Generator.cpp
-        src/Generator/Generator.h
-        src/Parser/Parser.cpp
-        src/Parser/Parser.h
-        src/Parser/AstNode.h
-        src/Utils/MemoryPool.cpp
-        src/Utils/MemoryPool.h
-        src/Generator/Stack.cpp
-        src/Generator/Stack.h)
+set(SOURCES
+    src/main.cpp
+    src/Lexer/Lexer.cpp
+    src/Lexer/Token.cpp
+    src/Generator/Generator.cpp
+    src/Parser/Parser.cpp
+    src/Utils/MemoryPool.cpp
+    src/Generator/Stack.cpp
+)
+
+set(HEADERS
+    src/Lexer/Lexer.h
+    src/Lexer/Token.h
+    src/Generator/Generator.h
+    src/Parser/Parser.h
+    src/Parser/AstNode.h
+    src/Utils/MemoryPool.h
+    src/Generator/Stack.h
+)
+
+set(PROJECT_BINARY_DIR  build/bin)
+
+set(CMAKE_SOURCE_DIR ${PROJECT_BINARY_DIR})
+set(CMAKE_PDB_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_COMPILE_PDB_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+
+add_executable(quartz-compiler ${SOURCES} ${HEADERS})

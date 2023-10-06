@@ -31,7 +31,14 @@
 *.out
 *.app
 
-build/
-quartz-compiler/.idea/
-quartz-compiler/cmake-build-debug-wsl/
-quartz-compiler/cmake-build-relwithdebinfo-wsl/
+*.cmake
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+quartz-compiler/.vs/
+quartz-compiler/build/
+quartz-compiler/CmakeFiles/
+quartz-compiler/CMakeCache.txt
+quartz-compiler/quartz-compiler.dir/

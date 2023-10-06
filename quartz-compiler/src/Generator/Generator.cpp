@@ -70,8 +70,7 @@ namespace Quartz {
                 exit(1);
             }
 
-            std::string offset;
-            offset = "QWORD [rsp + " + std::to_string((m_Stack.Size() - var->StackLocation - 1) * 8) + "]";
+            std::string offset = "QWORD [rsp + " + std::to_string((m_Stack.Size() - var->StackLocation - 1) * 8) + "]";
             m_Stack.Push(offset);
         }
         else if (std::holds_alternative<NodeTermParen*>(term->Term)) {
