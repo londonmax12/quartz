@@ -31,6 +31,7 @@ namespace Quartz {
         void EndScope();
     private:
         size_t m_StackSize;
+
         std::map<std::string, Variable> m_Variables;
         std::vector<size_t> m_Scopes;
         std::stringstream* m_Out;

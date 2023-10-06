@@ -1,7 +1,11 @@
-var x: int = 50;
+var x: int = 49;
 {
     var y: int = 10;
-    {
+    if (x + 3 - 52) {
+        if (0) {
+            var z: int = 2;
+            exit(z);
+        }
         var z: int = 5;
         exit(z);
     }

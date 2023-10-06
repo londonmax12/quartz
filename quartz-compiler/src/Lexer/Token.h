@@ -21,6 +21,7 @@ namespace Quartz {
         COLON,
         SUB,
         DIV,
+        IF,
         NONE
     };
 

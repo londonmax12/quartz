@@ -26,6 +26,7 @@ namespace Quartz {
         NodeExpr* ParseExpr(int minPrec = 0);
         NodeTerm* ParseTerm();
         NodeBinExpr* ParseBinExpr();
+        NodeScope* ParseScope();
         NodeStatement* ParseStatement();
     };
 }

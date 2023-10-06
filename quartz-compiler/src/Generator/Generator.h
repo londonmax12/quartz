@@ -18,7 +18,8 @@ namespace Quartz {
         std::string GenerateProgram();
     private:
         void GenerateExpr(NodeExpr* expr);
-        void GenerateBinExpr(NodeBinExpr* expr);
+        void GenerateBinExpr(NodeBinExpr* binExpr);
+        void GenerateScope(NodeScope* scope);
         void GenerateStatement(NodeStatement* statement);
         void GenerateTerm(NodeTerm* term);
 
@@ -26,6 +27,7 @@ namespace Quartz {
         std::stringstream m_Out;
 
         Stack m_Stack;
+        size_t m_LabelCount;
     };
 }
 

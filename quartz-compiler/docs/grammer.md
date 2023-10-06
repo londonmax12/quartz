@@ -30,11 +30,14 @@ $$
 \\
 [\text{Exit}] &\to exit([\text{Expr}]);
 \\
+[\text{Scope}] &\to \{[\text{Statement}^*]\}
+\\
 [\text{Statement}] &\to
     \begin{cases}
         [\text{Exit}]\\
         [\text{VarDecl}]\\
-        \{[\text{Statement}^*]\}
+        [\text{Scope}]\\
+        if([\text{Expr}]) [\text{Statement}]
     \end{cases}
 \\
 [\text{Program}] &\to [\text{Statement}]^+

@@ -76,6 +76,12 @@ namespace Quartz {
         std::variant<NodeEmpty*, NodeTerm*, NodeBinExpr*> Expr;
     };
 
+    struct NodeStatement;
+
+    struct NodeScope {
+        std::vector<NodeStatement*> Statements;
+    };
+
     struct NodeStatementExit {
         NodeStatementExit() = default;
 
@@ -95,18 +101,22 @@ namespace Quartz {
         NodeExpr* Expr;
     };
 
-    struct NodeStatement;
+    struct NodeStatementIf {
+        NodeStatementIf() = default;
 
-    struct NodeStatementScope {
-        std::vector<NodeStatement*> Statements;
+        NodeStatementIf(NodeExpr* expr, NodeScope* scope)
+        : Scope(scope), Expr(expr) {};
+
+        NodeExpr* Expr;
+        NodeScope* Scope;
     };
 
     struct NodeStatement {
         NodeStatement() = default;
 
-        NodeStatement(std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeStatementScope*> statement)
+        NodeStatement(std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeScope*, NodeStatementIf*> statement)
                 : Statement(statement) {};
-        std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeStatementScope*> Statement;
+        std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeScope*, NodeStatementIf*> Statement;
     };
 
     struct NodeProgram {

@@ -37,22 +37,31 @@ namespace Quartz {
             m_Out << "    syscall\n";
         }
         else if (std::holds_alternative<NodeStatementVarDecl*>(statement)) {
-            NodeStatementVarDecl* statementVarDecl = std::get<NodeStatementVarDecl*>(statement);
-            std::string identifier = statementVarDecl->Identifier.GetValue();
+            NodeStatementVarDecl* nodeStatementVarDecl = std::get<NodeStatementVarDecl*>(statement);
+            std::string identifier = nodeStatementVarDecl->Identifier.GetValue();
             if (m_Stack.Contains(identifier)) {
                 std::cerr << "Identifier already defined: " << identifier << "\n";
                 exit(1);
             }
-            m_Stack.Insert(statementVarDecl->Identifier.GetValue());
-            GenerateExpr(statementVarDecl->Expr);
+            m_Stack.Insert(nodeStatementVarDecl->Identifier.GetValue());
+            GenerateExpr(nodeStatementVarDecl->Expr);
         }
-        else if (std::holds_alternative<NodeStatementScope*>(statement)) {
-            NodeStatementScope* statementScope = std::get<NodeStatementScope*>(statement);
-            m_Stack.BeginScope();
-            for (auto& stmt : statementScope->Statements) {
-                GenerateStatement(stmt);
-            }
-            m_Stack.EndScope();
+        else if (std::holds_alternative<NodeScope*>(statement)) {
+            NodeScope* statementScope = std::get<NodeScope*>(statement);
+            GenerateScope(statementScope);
+        }
+        else if (std::holds_alternative<NodeStatementIf*>(statement)) {
+            NodeStatementIf* nodeStatementIf = std::get<NodeStatementIf*>(statement);
+            GenerateExpr(nodeStatementIf->Expr);
+
+            std::string labelName = "label" + std::to_string(m_LabelCount);
+            m_LabelCount++;
+
+            m_Stack.Pop("rax");
+            m_Out << "    test rax, rax\n";
+            m_Out << "    jz " << labelName << '\n';
+            GenerateScope(nodeStatementIf->Scope);
+            m_Out << labelName << ":\n";
         }
     }
 
@@ -125,6 +134,14 @@ namespace Quartz {
             m_Out << "    div rbx\n";
             m_Stack.Push("rax");
         }
+    }
+
+    void Generator::GenerateScope(NodeScope* scope) {
+        m_Stack.BeginScope();
+        for (auto& stmt : scope->Statements) {
+            GenerateStatement(stmt);
+        }
+        m_Stack.EndScope();
     }
 
     void Generator::GenerateExpr(NodeExpr* exprNode) {

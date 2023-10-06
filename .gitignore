@@ -37,6 +37,8 @@
 *.vcxproj.filters
 *.vcxproj.user
 
+quartz-compiler/.idea/
+quartz-compiler/cmake-build-debug-wsl/
 quartz-compiler/.vs/
 quartz-compiler/build/
 quartz-compiler/CmakeFiles/

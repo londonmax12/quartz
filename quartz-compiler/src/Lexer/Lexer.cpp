@@ -33,6 +33,11 @@ namespace Quartz {
                     currString.clear();
                     continue;
                 }
+                else if (currString == "if") {
+                    tokens.push_back({TokenType::IF});
+                    currString.clear();
+                    continue;
+                }
 
                 tokens.push_back({TokenType::IDENTIFIER, currString});
                 currString.clear();

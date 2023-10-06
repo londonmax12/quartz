@@ -165,6 +165,28 @@ namespace Quartz {
         return nodeExprLhs;
     }
 
+    NodeScope* Parser::ParseScope() {
+        if (Peak().GetType() != TokenType::OPEN_CURLY)
+            return nullptr;
+
+        Consume();
+
+        NodeScope* scope = m_Pool.Allocate<NodeScope>();
+
+        NodeStatement* nodeStatement = ParseStatement();
+        while (nodeStatement) {
+            scope->Statements.push_back(nodeStatement);
+            nodeStatement = ParseStatement();
+        }
+
+        if (Peak().GetType() != TokenType::CLOSE_CURLY) {
+            std::cerr << "Expected \'}\'\n";
+            exit(1);
+        }
+        Consume();
+        return scope;
+    }
+
     NodeStatement* Parser::ParseStatement() {
         switch (Peak().GetType()) {
             case TokenType::EXIT: {
@@ -244,25 +266,49 @@ namespace Quartz {
                 return statement;
             }
             case TokenType::OPEN_CURLY: {
-                Consume();
-
-                NodeStatementScope* scope = m_Pool.Allocate<NodeStatementScope>();
-
-                NodeStatement* nodeStatement = ParseStatement();
-                while (nodeStatement) {
-                    scope->Statements.push_back(nodeStatement);
-                    nodeStatement = ParseStatement();
-                }
-
-                if (Peak().GetType() != TokenType::CLOSE_CURLY) {
-                    std::cerr << "Expected \'}\'\n";
+                NodeScope* scope = ParseScope();
+                if (!scope) {
+                    std::cerr << "Invalid scope\n";
                     exit(1);
                 }
-                Consume();
 
                 NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
                 statement->Statement = scope;
                 return statement;
+            }
+            case TokenType::IF: {
+                Consume();
+                NodeStatementIf* nodeStatementIf = m_Pool.Allocate<NodeStatementIf>();
+
+                if (Peak().GetType() != TokenType::OPEN_PAREN) {
+                    std::cerr << "Expected \'(\'\n";
+                    exit(1);
+                }
+                Consume();
+
+                NodeExpr* nodeExpr = ParseExpr();
+                if (!nodeExpr) {
+                    std::cerr << "Expected expression\n";
+                    exit(1);
+                }
+                nodeStatementIf->Expr = nodeExpr;
+
+                if (Peak().GetType() != TokenType::CLOSE_PAREN) {
+                    std::cerr << "Expected \')\'\n";
+                    exit(1);
+                }
+                Consume();
+
+                NodeScope* nodeScope = ParseScope();
+                if (!nodeScope) {
+                    std::cerr << "Failed to parse scope\n";
+                    exit(1);
+                }
+                nodeStatementIf->Scope = nodeScope;
+
+                NodeStatement* nodeStatement = m_Pool.Allocate<NodeStatement>();
+                nodeStatement->Statement = nodeStatementIf;
+                return nodeStatement;
             }
             default: {
                 return nullptr;
