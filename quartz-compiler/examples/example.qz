@@ -1,14 +1,8 @@
-var x: int = 49;
+var x: int = 0;
 {
-    var y: int = 10;
-    if (x + 3 - 52) {
-        if (0) {
-            var z: int = 2;
-            exit(z);
-        }
-        var z: int = 5;
+    var z: int = 10;
+    if (x)
         exit(z);
-    }
 }
-var y: int = x * 2;
+var y: int = 2;
 exit(y);

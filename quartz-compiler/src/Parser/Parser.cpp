@@ -299,16 +299,16 @@ namespace Quartz {
                 }
                 Consume();
 
-                NodeScope* nodeScope = ParseScope();
-                if (!nodeScope) {
+                NodeStatement* nodeStatement = ParseStatement();
+                if (!nodeStatement) {
                     std::cerr << "Failed to parse scope\n";
                     exit(1);
                 }
-                nodeStatementIf->Scope = nodeScope;
+                nodeStatementIf->Statement = nodeStatement;
 
-                NodeStatement* nodeStatement = m_Pool.Allocate<NodeStatement>();
-                nodeStatement->Statement = nodeStatementIf;
-                return nodeStatement;
+                NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
+                statement->Statement = nodeStatementIf;
+                return statement;
             }
             default: {
                 return nullptr;

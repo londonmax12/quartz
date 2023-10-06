@@ -39,6 +39,7 @@
 
 quartz-compiler/.idea/
 quartz-compiler/cmake-build-debug-wsl/
+quartz-compiler/cmake-build-release-wsl/
 quartz-compiler/.vs/
 quartz-compiler/build/
 quartz-compiler/CmakeFiles/

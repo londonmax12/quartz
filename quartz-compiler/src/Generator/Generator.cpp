@@ -60,7 +60,7 @@ namespace Quartz {
             m_Stack.Pop("rax");
             m_Out << "    test rax, rax\n";
             m_Out << "    jz " << labelName << '\n';
-            GenerateScope(nodeStatementIf->Scope);
+            GenerateStatement(nodeStatementIf->Statement);
             m_Out << labelName << ":\n";
         }
     }

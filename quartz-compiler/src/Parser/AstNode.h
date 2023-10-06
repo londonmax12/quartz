@@ -104,11 +104,11 @@ namespace Quartz {
     struct NodeStatementIf {
         NodeStatementIf() = default;
 
-        NodeStatementIf(NodeExpr* expr, NodeScope* scope)
-        : Scope(scope), Expr(expr) {};
+        NodeStatementIf(NodeExpr* expr, NodeStatement* statement)
+        : Statement(statement), Expr(expr) {};
 
         NodeExpr* Expr;
-        NodeScope* Scope;
+        NodeStatement* Statement;
     };
 
     struct NodeStatement {
