@@ -1,7 +1,7 @@
 #ifndef QUARTZ_MEMORYPOOL_H
 #define QUARTZ_MEMORYPOOL_H
 
-#include <cstddef>
+#include <iostream>
 
 namespace Quartz {
     class MemoryPool {
@@ -12,6 +12,10 @@ namespace Quartz {
         T* Allocate() {
             std::byte* offset = m_Offset;
             m_Offset += sizeof(T);
+            if (offset > m_Buffer + m_Size) {
+                std::cerr << "Pool ran out of memory\n";
+                exit(1);
+            }
             T* typedPointer = new(offset) T;
             return typedPointer;
         }
