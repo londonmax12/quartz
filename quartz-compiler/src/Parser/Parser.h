@@ -8,6 +8,20 @@
 #include "../Utils/MemoryPool.h"
 
 namespace Quartz {
+    class ParserException : public std::exception {
+    public:
+        ParserException(const std::string& message, Token token = Token({TokenType::NONE}))
+            : m_ErrorMessage(message), m_Token(token) {}
+
+        const char* what() const noexcept override {
+            return m_ErrorMessage.c_str();
+        }
+        Token GetToken() const { return m_Token; };
+    private:
+        std::string m_ErrorMessage;
+        Token m_Token;
+    };
+
     class Parser {
     public:
         Parser(std::vector<Token> tokens);
@@ -22,6 +36,7 @@ namespace Quartz {
 
         Token Peak(int offset = 0);
         Token Consume(int amount = 1);
+        Token TryConsume(TokenType type, const std::string& errMessage);
 
         NodeExpr* ParseExpr(int minPrec = 0);
         NodeTerm* ParseTerm();

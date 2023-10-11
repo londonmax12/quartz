@@ -1,6 +1,6 @@
 #include "Parser.h"
 
-#include <iostream>
+#include "../Logging/Logging.h"
 
 namespace Quartz {
     Parser::Parser(std::vector<Token> tokens)
@@ -28,17 +28,19 @@ namespace Quartz {
     }
 
     NodeProgram Parser::ParseProgram() {
-        NodeProgram nodeProgram;
-        while (Peak().IsValid())
-        {
-            NodeStatement* statement = ParseStatement();
-            if (!statement) {
-                std::cerr << "Invalid statement\n";
-                exit(1);
+        try {
+            NodeProgram nodeProgram;
+            while (Peak().IsValid()) {
+                NodeStatement* statement = ParseStatement();
+                if (!statement)
+                    throw(ParserException("Invalid statement while parsing program"));
+
+                nodeProgram.Statements.push_back(statement);
             }
-            nodeProgram.Statements.push_back(statement);
+            return nodeProgram;
+        } catch (const MemoryAllocationException& e) {
+            throw ParserException(e.what());
         }
-        return nodeProgram;
     }
 
     NodeTerm* Parser::ParseTerm() {
@@ -46,41 +48,28 @@ namespace Quartz {
         TokenType term =  Peak().GetType();
         switch (term) {
             case TokenType::INT_LIT: {
-                nodeTerm = m_Pool.Allocate<NodeTerm>();
-                NodeTermIntLit* nodeTermIntLit = m_Pool.Allocate<NodeTermIntLit>();
                 Token token = Consume();
-                nodeTermIntLit->IntLiteral = token;
-                nodeTerm->Term = nodeTermIntLit;
+                NodeTermIntLit* nodeTermIntLit = m_Pool.Allocate<NodeTermIntLit>(token);
+                nodeTerm = m_Pool.Allocate<NodeTerm>(nodeTermIntLit);
                 break;
             }
             case TokenType::IDENTIFIER: {
-                nodeTerm = m_Pool.Allocate<NodeTerm>();
-                NodeTermIdentifier* nodeTermIdentifier = m_Pool.Allocate<NodeTermIdentifier>();
                 Token token = Consume();
-                nodeTermIdentifier->Identifier = token;
-                nodeTerm->Term = nodeTermIdentifier;
+                NodeTermIdentifier* nodeTermIdentifier = m_Pool.Allocate<NodeTermIdentifier>(token);
+                nodeTerm = m_Pool.Allocate<NodeTerm>(nodeTermIdentifier);
                 break;
             }
             case TokenType::OPEN_PAREN: {
                 Token token = Consume();
+
                 NodeExpr* nodeExpr = ParseExpr();
-                nodeTerm = m_Pool.Allocate<NodeTerm>();
+                if (!nodeExpr)
+                    throw(ParserException("Expected expression", token));
 
-                if (!nodeExpr) {
-                    std::cerr << "Expected expression\n";
-                    exit(1);
-                }
+                TryConsume(TokenType::CLOSE_PAREN, "Expected \')\'");
 
-                if (Peak().GetType() != TokenType::CLOSE_PAREN) {
-                    std::cerr << "Expected \')\'\n";
-                    exit(1);
-                }
-
-                Consume();
-
-                NodeTermParen* nodeTermParen = m_Pool.Allocate<NodeTermParen>();
-                nodeTermParen->Expr = nodeExpr;
-                nodeTerm->Term = nodeTermParen;
+                NodeTermParen* nodeTermParen = m_Pool.Allocate<NodeTermParen>(nodeExpr);
+                nodeTerm = m_Pool.Allocate<NodeTerm>(nodeTermParen);
                 break;
             }
             default:
@@ -97,8 +86,7 @@ namespace Quartz {
         if (!nodeTermLhs)
             return nodeExpr;
 
-        NodeExpr* nodeExprLhs = m_Pool.Allocate<NodeExpr>();
-        nodeExprLhs->Expr = nodeTermLhs;
+        NodeExpr* nodeExprLhs = m_Pool.Allocate<NodeExpr>(nodeTermLhs);
 
         while (true) {
             Token currToken = Peak();
@@ -118,9 +106,8 @@ namespace Quartz {
             int nextMinPrec = prec + 1;
             NodeExpr* nodeExprRhs = ParseExpr(nextMinPrec);
 
-            if (!nodeExprRhs) {
-                std::cerr << "Failed to parse expression\n";
-            }
+            if (!nodeExprRhs)
+                throw(ParserException("Failed to parse expression"));
 
             NodeBinExpr* binExpr = m_Pool.Allocate<NodeBinExpr>();
             NodeExpr* nodeExprLhs2 = m_Pool.Allocate<NodeExpr>();
@@ -168,97 +155,57 @@ namespace Quartz {
     NodeScope* Parser::ParseScope() {
         if (Peak().GetType() != TokenType::OPEN_CURLY)
             return nullptr;
-
         Consume();
 
         NodeScope* scope = m_Pool.Allocate<NodeScope>();
-
         NodeStatement* nodeStatement = ParseStatement();
         while (nodeStatement) {
             scope->Statements.push_back(nodeStatement);
             nodeStatement = ParseStatement();
         }
 
-        if (Peak().GetType() != TokenType::CLOSE_CURLY) {
-            std::cerr << "Expected \'}\'\n";
-            exit(1);
-        }
-        Consume();
+        TryConsume(TokenType::CLOSE_CURLY,  "Expected \'}\'");
+
         return scope;
     }
 
     NodeStatement* Parser::ParseStatement() {
         switch (Peak().GetType()) {
             case TokenType::EXIT: {
-                if (Peak(1).GetType() != TokenType::OPEN_PAREN) {
-                    std::cerr << "Expected \'(\'\n";
-                    exit(1);
-                }
-                Consume(2);
-
+                Consume();
+                TryConsume(TokenType::OPEN_PAREN, "Expected \'(\'");
+                Token t = Peak();
                 NodeExpr* nodeExpr = ParseExpr();
-                if (std::holds_alternative<NodeEmpty*>(nodeExpr->Expr)) {
-                    std::cerr << "Invalid expression\n";
-                    exit(1);
+                if (!nodeExpr) {
+                    throw(ParserException("Expected expression", t));
                 }
 
-                NodeStatementExit* nodeExit = m_Pool.Allocate<NodeStatementExit>();
-                nodeExit->Expr = nodeExpr;
+                NodeStatementExit* nodeExit = m_Pool.Allocate<NodeStatementExit>(nodeExpr);
 
-                if (Peak().GetType() != TokenType::CLOSE_PAREN) {
-                    std::cerr << "Expected \')\'\n";
-                    exit(1);
-                }
-                Consume();
+                TryConsume(TokenType::CLOSE_PAREN, "Expected \')\'");
+                TryConsume(TokenType::ENDL, "Expected \';\'");
 
-                if (Peak().GetType() != TokenType::ENDL) {
-                    std::cerr << "Expected \';\'\n";
-                    exit(1);
-                }
-                Consume();
-
-                NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
-                statement->Statement = nodeExit;
+                NodeStatement* statement = m_Pool.Allocate<NodeStatement>(nodeExit);
                 return statement;
             }
             case TokenType::VAR: {
                 Consume();
+                Token varIdentifier = TryConsume(TokenType::IDENTIFIER, "Expected identifier");
+                TryConsume(TokenType::COLON, "Expected \':\'");
+                TryConsume(TokenType::VAR_INT, "Expected variable type");
+                TryConsume(TokenType::EQUALS, "Expected \'=\'");\
 
-                if (Peak().GetType() != TokenType::IDENTIFIER) {
-                    std::cerr << "Expected identifier\n";
-                    exit(1);
-                }
-                if (Peak(1).GetType() != TokenType::COLON) {
-                    std::cerr << "Expected \':\'\n";
-                    exit(1);
-                }
-                if (Peak(2).GetType() != TokenType::VAR_INT) {
-                    std::cerr << "Expected variable type\n";
-                    exit(1);
-                }
-                if (Peak(3).GetType() != TokenType::EQUALS) {
-                    std::cerr << "Expected \'=\'\n";
-                    exit(1);
-                }
-
-                Token varIdentifier = Consume();
-                Consume(3);
-
+                Token t = Peak();
                 NodeExpr* varExpr = ParseExpr();
 
-                if (std::holds_alternative<NodeEmpty*>(varExpr->Expr)) {
-                    std::cerr << "Expected expression\n";
-                    exit(1);
-                }
+                if (std::holds_alternative<NodeEmpty*>(varExpr->Expr))
+                    throw(ParserException("Expected expression", t));
 
-                NodeStatementVarDecl* varDecl = m_Pool.Allocate<NodeStatementVarDecl>();
-                varDecl->Identifier = varIdentifier;
-                varDecl->Expr = varExpr;
+                NodeStatementVarDecl* varDecl = m_Pool.Allocate<NodeStatementVarDecl>(varIdentifier, varExpr);
 
-                if (Peak().GetType() != TokenType::ENDL) {
-                    std::cerr << "Expected \';\'\n";
-                    exit(1);
-                }
+                if (Peak().GetType() != TokenType::ENDL)
+                    throw(ParserException("Expected \';\'"));
+
                 Consume();
 
                 NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
@@ -267,52 +214,48 @@ namespace Quartz {
             }
             case TokenType::OPEN_CURLY: {
                 NodeScope* scope = ParseScope();
-                if (!scope) {
-                    std::cerr << "Invalid scope\n";
-                    exit(1);
-                }
+                if (!scope)
+                    throw(ParserException("Invalid scope"));
 
-                NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
-                statement->Statement = scope;
+                NodeStatement* statement = m_Pool.Allocate<NodeStatement>(scope);
                 return statement;
             }
             case TokenType::IF: {
                 Consume();
-                NodeStatementIf* nodeStatementIf = m_Pool.Allocate<NodeStatementIf>();
 
-                if (Peak().GetType() != TokenType::OPEN_PAREN) {
-                    std::cerr << "Expected \'(\'\n";
-                    exit(1);
-                }
+                if (Peak().GetType() != TokenType::OPEN_PAREN)
+                    throw(ParserException("Expected \'(\'"));
+
                 Consume();
 
+                Token t = Peak();
                 NodeExpr* nodeExpr = ParseExpr();
-                if (!nodeExpr) {
-                    std::cerr << "Expected expression\n";
-                    exit(1);
-                }
-                nodeStatementIf->Expr = nodeExpr;
+                if (!nodeExpr)
+                    throw(ParserException("Expected expression", t));
 
-                if (Peak().GetType() != TokenType::CLOSE_PAREN) {
-                    std::cerr << "Expected \')\'\n";
-                    exit(1);
-                }
+                if (Peak().GetType() != TokenType::CLOSE_PAREN)
+                    throw(ParserException("Expected \')\'"));
+
                 Consume();
 
                 NodeStatement* nodeStatement = ParseStatement();
-                if (!nodeStatement) {
-                    std::cerr << "Failed to parse scope\n";
-                    exit(1);
-                }
-                nodeStatementIf->Statement = nodeStatement;
+                if (!nodeStatement)
+                    throw(ParserException("Failed to parse statement"));
 
-                NodeStatement* statement = m_Pool.Allocate<NodeStatement>();
-                statement->Statement = nodeStatementIf;
+                NodeStatementIf* nodeStatementIf = m_Pool.Allocate<NodeStatementIf>(nodeExpr, nodeStatement);
+                NodeStatement* statement = m_Pool.Allocate<NodeStatement>(nodeStatementIf);
                 return statement;
             }
             default: {
                 return nullptr;
             }
         }
+    }
+
+    Token Parser::TryConsume(TokenType type, const std::string& errMessage) {
+        if (Peak().GetType() != type)
+            throw(ParserException(errMessage));
+
+        return Consume();
     }
 }

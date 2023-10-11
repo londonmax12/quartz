@@ -1,125 +1,120 @@
 #include "Lexer.h"
+#include "../Logging/Logging.h"
 
-#include <iostream>
+#include <sstream>
+#include <fstream>
 
 namespace Quartz {
     Lexer::Lexer(std::string src)
-            : m_Src(src)
+            : m_FilePath(src)
     {
     }
 
-    std::vector<Token> Lexer::Tokenize() {
-        std::vector<Token> tokens{};
+    Lexer::LexerOut Lexer::Tokenize() {
+        std::ifstream file(m_FilePath, std::ios::binary | std::ios::ate);
+        if (!file)
+            throw LexerException(Logger::Format("Failed to open file {}", m_FilePath));
+
+        std::ifstream::pos_type fileSize = file.tellg();
+        std::vector<char> buffer(fileSize);
+        file.seekg(0, std::ios::beg);
+        if (!file.read(buffer.data(), fileSize))
+            throw LexerException(Logger::Format("Failed to read file {}", m_FilePath));
+
+        m_Src = std::string(buffer.begin(), buffer.end());
+
         std::string currString{};
 
         while (Peak()) {
             if (std::isalpha(Peak())) {
+                int col = m_Column;
                 currString.push_back(Consume());
                 while (Peak() && isalnum(Peak())) {
                     currString.push_back(Consume());
                 }
                 if (currString == "exit") {
-                    tokens.push_back({TokenType::EXIT});
-                    currString.clear();
-                    continue;
+                    m_Out.Tokens.push_back({TokenType::EXIT, m_Line, col});
+                } else if (currString == "var") {
+                    m_Out.Tokens.push_back({TokenType::VAR, m_Line, col});
+                } else if (currString == "int") {
+                    m_Out.Tokens.push_back({TokenType::VAR_INT, m_Line, col});
+                } else if (currString == "if") {
+                    m_Out.Tokens.push_back({TokenType::IF, m_Line, col});
+                } else {
+                    m_Out.Tokens.push_back({TokenType::IDENTIFIER, m_Line, col, currString});
                 }
-                else if (currString == "var") {
-                    tokens.push_back({TokenType::VAR});
-                    currString.clear();
-                    continue;
-                }
-                else if (currString == "int") {
-                    tokens.push_back({TokenType::VAR_INT});
-                    currString.clear();
-                    continue;
-                }
-                else if (currString == "if") {
-                    tokens.push_back({TokenType::IF});
-                    currString.clear();
-                    continue;
-                }
-
-                tokens.push_back({TokenType::IDENTIFIER, currString});
                 currString.clear();
                 continue;
             }
             else if (std::isdigit(Peak())) {
+                int col = m_Column;
                 currString.clear();
                 currString += Consume();
                 while (Peak() && std::isdigit(Peak())) {
                     currString += Consume();
                 }
-                tokens.push_back({TokenType::INT_LIT, currString});
+                if (Peak() && std::isalnum(Peak())) {
+                    throw LexerException("Indentifiers cannot begin with a number", {TokenType::ERROR, m_Line, m_Column});
+                }
+                m_Out.Tokens.push_back({TokenType::INT_LIT, m_Line, col, currString});
                 currString.clear();
-                continue;
             }
             else if (Peak() == ';') {
+                m_Out.Tokens.push_back({TokenType::ENDL, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::ENDL});
-                continue;
             }
             else if (Peak() == '(') {
+                m_Out.Tokens.push_back({TokenType::OPEN_PAREN, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::OPEN_PAREN});
-                continue;
             }
             else if (Peak() == ')') {
+                m_Out.Tokens.push_back({TokenType::CLOSE_PAREN, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::CLOSE_PAREN});
-                continue;
             }
             else if (Peak() == '{') {
+                m_Out.Tokens.push_back({TokenType::OPEN_CURLY, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::OPEN_CURLY});
-                continue;
             }
             else if (Peak() == '}') {
+                m_Out.Tokens.push_back({TokenType::CLOSE_CURLY, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::CLOSE_CURLY});
-                continue;
             }
             else if (Peak() == '=') {
+                m_Out.Tokens.push_back({TokenType::EQUALS, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::EQUALS});
-                continue;
             }
             else if (Peak() == ':') {
+                m_Out.Tokens.push_back({TokenType::COLON, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::COLON});
-                continue;
             }
             else if (Peak() == '+') {
+                m_Out.Tokens.push_back({TokenType::PLUS, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::PLUS});
-                continue;
             }
             else if (Peak() == '*') {
+                m_Out.Tokens.push_back({TokenType::MULTI, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::MULTI});
-                continue;
             }
             else if (Peak() == '-') {
+                m_Out.Tokens.push_back({TokenType::SUB, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::SUB});
-                continue;
             }
             else if (Peak() == '/') {
+                m_Out.Tokens.push_back({TokenType::DIV, m_Line, m_Column});
                 Consume();
-                tokens.push_back({TokenType::DIV});
-                continue;
             }
             else if (std::isspace(Peak())) {
                 Consume();
-                continue;
             }
             else {
-                std::cerr << "Unexpected symbol\n";
-                exit(1);
+                std::stringstream eMsg;
+                eMsg << "Unexpected symbol: " << Peak();
+                throw LexerException(eMsg.str(), {TokenType::ERROR, m_Line, m_Column});
             }
         }
 
         m_Index = 0;
-        return tokens;
+        return m_Out;
     }
 
     char Lexer::Peak(int offset) {
@@ -130,6 +125,14 @@ namespace Quartz {
     }
 
     char Lexer::Consume() {
-        return m_Src[m_Index++];
+        char currentChar = m_Src[m_Index++];
+        if (currentChar == '\n') {
+            m_Line++;
+            m_Column = 1;
+        } else {
+            m_Column++;
+        }
+
+        return currentChar;
     }
 }

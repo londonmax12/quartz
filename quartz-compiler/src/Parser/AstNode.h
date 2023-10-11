@@ -38,7 +38,6 @@ namespace Quartz {
 
     struct NodeTermIntLit {
         NodeTermIntLit() = default;
-
         NodeTermIntLit(Token intLiteral)
                 : IntLiteral(intLiteral) {};
 
@@ -47,7 +46,6 @@ namespace Quartz {
 
     struct NodeTermIdentifier {
         NodeTermIdentifier() = default;
-
         NodeTermIdentifier(Token identifier)
                 : Identifier(identifier) {};
 
@@ -56,7 +54,6 @@ namespace Quartz {
 
     struct NodeTermParen {
         NodeTermParen() = default;
-
         NodeTermParen(NodeExpr *expr)
                 : Expr(expr) {};
 
@@ -64,12 +61,15 @@ namespace Quartz {
     };
 
     struct NodeTerm {
+        NodeTerm() = default;
+        NodeTerm(std::variant<NodeTermIntLit*, NodeTermIdentifier*, NodeTermParen*> term)
+        : Term(term) {};
+
         std::variant<NodeTermIntLit*, NodeTermIdentifier*, NodeTermParen*> Term;
     };
 
     struct NodeExpr {
         NodeExpr() = default;
-
         NodeExpr(std::variant<NodeEmpty*, NodeTerm*, NodeBinExpr*> expr)
                 : Expr(expr) {};
 
@@ -84,7 +84,6 @@ namespace Quartz {
 
     struct NodeStatementExit {
         NodeStatementExit() = default;
-
         NodeStatementExit(NodeExpr *expr)
                 : Expr(expr) {};
 
@@ -93,7 +92,6 @@ namespace Quartz {
 
     struct NodeStatementVarDecl {
         NodeStatementVarDecl() = default;
-
         NodeStatementVarDecl(Token identifier, NodeExpr* expr)
                 : Identifier(identifier), Expr(expr) {};
 
@@ -103,9 +101,8 @@ namespace Quartz {
 
     struct NodeStatementIf {
         NodeStatementIf() = default;
-
         NodeStatementIf(NodeExpr* expr, NodeStatement* statement)
-        : Statement(statement), Expr(expr) {};
+            : Statement(statement), Expr(expr) {};
 
         NodeExpr* Expr;
         NodeStatement* Statement;
@@ -113,7 +110,6 @@ namespace Quartz {
 
     struct NodeStatement {
         NodeStatement() = default;
-
         NodeStatement(std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeScope*, NodeStatementIf*> statement)
                 : Statement(statement) {};
         std::variant<NodeEmpty*, NodeStatementExit*, NodeStatementVarDecl*, NodeScope*, NodeStatementIf*> Statement;

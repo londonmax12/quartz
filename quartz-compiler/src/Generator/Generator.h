@@ -11,6 +11,18 @@
 #include "Stack.h"
 
 namespace Quartz {
+    class GeneratorException : public std::exception {
+    public:
+        GeneratorException(const std::string& message)
+            : m_ErrorMessage(message) {}
+
+        const char* what() const noexcept override {
+            return m_ErrorMessage.c_str();
+        }
+    private:
+        std::string m_ErrorMessage;
+    };
+
     class Generator {
     public:
         Generator(NodeProgram source);

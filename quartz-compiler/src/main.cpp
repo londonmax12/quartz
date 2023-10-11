@@ -1,61 +1,63 @@
 #include <iostream>
-#include <fstream>
 #include <string>
+#include <fstream>
 
 #include "Lexer/Lexer.h"
 #include "Parser/Parser.h"
 #include "Generator/Generator.h"
-
-void PrintTokens(std::vector<Quartz::Token>& tokens) {
-    for (auto& token : tokens) {
-        std::cout << "[" << token.Str() << "]";
-        if (token.GetType() == Quartz::TokenType::ENDL) {
-            std::cout << "\n";
-        }
-    }
-}
+#include "Logging/Logging.h"
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Incorrect usage: example {input file}\n";
-        return 1;
-    }
-
-    std::ifstream file(argv[1], std::ios::binary | std::ios::ate);
-    if (!file) {
-        std::cerr << "Failed to open file: " << argv[1] << "\n";
-        return 1;
-    }
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::string inputStr{};
-    {
-        char* buffer = (char*)malloc(size);
-        if (!file.read(buffer, size)) {
-            std::cerr << "Failed to read data from: " << argv[1] << "\n";
+    try {
+        if (argc != 2) {
+            LOG_FATAL("Incorrect Usage: quartz-compiler {Input File}");
             return 1;
         }
-        inputStr = buffer;
-        free(buffer);
+
+        auto start = std::chrono::high_resolution_clock::now();
+
+        LOG_INFO("Performing lexical analysis...");
+        Quartz::Lexer lexer{argv[1]};
+        Quartz::Lexer::LexerOut lexerResult = lexer.Tokenize();
+
+        LOG_INFO("Parsing tokens...");
+        Quartz::Parser parser{lexerResult.Tokens};
+        Quartz::NodeProgram exitNode = parser.ParseProgram();
+
+        LOG_INFO("Generating assembly source...");
+        Quartz::Generator generator{exitNode};
+        std::string outASM = generator.GenerateProgram();
+
+        std::fstream outputFile{"out.asm", std::ios::out};
+        outputFile << outASM;
+        outputFile.close();
+
+        system("nasm -felf64 out.asm");
+        system("ld -o out out.o");
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        LOG_INFO("Took {} milliseconds to compile", duration.count());
+
+        return 0;
+    } catch (const Quartz::LexerException& e) {
+        if (e.GetToken().GetType() != Quartz::TokenType::NONE) {
+            LOG_FATAL("Failed to perform lexical analysis: {}", e.what());
+            LOG_FATAL("{}", e.GetToken());
+        }
+        else
+            LOG_FATAL("Failed to perform lexical analysis: {}", e.what());
+        return 1;
+    } catch (const Quartz::ParserException& e) {
+        if (e.GetToken().GetType() != Quartz::TokenType::NONE) {
+            LOG_FATAL("Failed to perform lexical analysis");
+            LOG_FATAL("{}: {}", e.GetToken(),  e.what());
+        }
+        else
+            LOG_FATAL("Failed to perform lexical analysis: {}", e.what());
+        return 1;
+    } catch (const Quartz::GeneratorException& e) {
+        LOG_FATAL("Generator failed: {}", e.what());
+        return 1;
     }
-    std::cout << "Performing lexical analysis...\n";
-    Quartz::Lexer lexer{inputStr};
-    std::vector<Quartz::Token> tokens = lexer.Tokenize();
-
-    std::cout << "Parsing tokens...\n";
-    Quartz::Parser parser{tokens};
-    Quartz::NodeProgram exitNode = parser.ParseProgram();
-
-    std::cout << "Generating assembly sources...\n";
-    Quartz::Generator generator{exitNode};
-    std::string outASM = generator.GenerateProgram();
-
-    std::fstream outputFile{"out.asm", std::ios::out};
-    outputFile << outASM;
-    outputFile.close();
-
-    system("nasm -felf64 out.asm");
-    system("ld -o out out.o");
-    return 0;
 }

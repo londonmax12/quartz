@@ -1,6 +1,6 @@
 #include "Generator.h"
 
-#include <iostream>
+#include "../Logging/Logging.h"
 
 namespace Quartz {
     Generator::Generator(NodeProgram source)
@@ -39,10 +39,9 @@ namespace Quartz {
         else if (std::holds_alternative<NodeStatementVarDecl*>(statement)) {
             NodeStatementVarDecl* nodeStatementVarDecl = std::get<NodeStatementVarDecl*>(statement);
             std::string identifier = nodeStatementVarDecl->Identifier.GetValue();
-            if (m_Stack.Contains(identifier)) {
-                std::cerr << "Identifier already defined: " << identifier << "\n";
-                exit(1);
-            }
+            if (m_Stack.Contains(identifier))
+                throw GeneratorException(Logger::Format("Identifier already defined: {}", identifier));
+
             m_Stack.Insert(nodeStatementVarDecl->Identifier.GetValue());
             GenerateExpr(nodeStatementVarDecl->Expr);
         }
@@ -74,10 +73,8 @@ namespace Quartz {
             NodeTermIdentifier* nodeTermIdentifier = std::get<NodeTermIdentifier*>(term->Term);
 
             Stack::Variable* var = m_Stack.Get(nodeTermIdentifier->Identifier.GetValue());
-            if (!var) {
-                std::cerr << "Undeclared variable: " << nodeTermIdentifier->Identifier.GetValue() << "\n";
-                exit(1);
-            }
+            if (!var)
+                throw GeneratorException(Logger::Format("Undeclared variable: {}", nodeTermIdentifier->Identifier.GetValue()));
 
             std::string offset = "QWORD [rsp + " + std::to_string((m_Stack.Size() - var->StackLocation - 1) * 8) + "]";
             m_Stack.Push(offset);

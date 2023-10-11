@@ -2,9 +2,10 @@
 
 namespace Quartz {
     Token::Token(TokenType type, std::string value)
-            : m_Type(type), m_Value(value)
-    {
-    }
+            : m_Type(type), m_Value(value) {}
+
+    Token::Token(TokenType type, int line, int col, std::string value)
+            : m_Type(type), m_Value(value), m_Line(line), m_Column(col) {}
 
     bool Token::IsBinOperator() {
         return IsBinOperator(m_Type);
@@ -41,7 +42,7 @@ namespace Quartz {
     }
 
     bool Token::IsValid() {
-        if (m_Type == TokenType::NONE)
+        if (m_Type >= TokenType::ERROR)
             return false;
 
         return true;
@@ -54,40 +55,8 @@ namespace Quartz {
         return true;
     }
 
-    std::string Token::Str() {
-        switch (m_Type) {
-            case EXIT:
-                return "EXIT";
-            case INT_LIT:
-                return "INT_LIT: " + m_Value;
-            case ENDL:
-                return "ENDL";
-            case OPEN_PAREN:
-                return "OPEN_PAREN";
-            case CLOSE_PAREN:
-                return "CLOSE_PAREN";
-            case IDENTIFIER:
-                return "IDENTIFIER: " + m_Value;
-            case VAR:
-                return "VAR";
-            case VAR_INT:
-                return "VAR_INT";
-            case EQUALS:
-                return "EQUALS";
-            case PLUS:
-                return "PLUS";
-            case MULTI:
-                return "MULTI";
-            case COLON:
-                return "COLON";
-            case SUB:
-                return "SUB";
-            case DIV:
-                return "DIV";
-            case NONE:
-                return "NONE";
-            default:
-                return "UNKNOWN";
-        }
+    std::ostream& operator<<(std::ostream& os, const Quartz::Token& token) {
+        os << "Line: " << token.GetLine() << ", Col: " << token.GetColumn();
+        return os;
     }
 }

@@ -2,6 +2,7 @@
 #define QUARTZ_TOKEN_H
 
 #include <string>
+#include <ostream>
 
 namespace Quartz {
     enum TokenType {
@@ -22,6 +23,8 @@ namespace Quartz {
         SUB,
         DIV,
         IF,
+
+        ERROR,
         NONE
     };
 
@@ -29,9 +32,13 @@ namespace Quartz {
     public:
         Token() = default;
         Token(TokenType type, std::string value = "");
+        Token(TokenType type, int line, int col, std::string value = "");
 
-        TokenType GetType() { return m_Type; }
-        std::string GetValue() { return m_Value; }
+        TokenType GetType() const { return m_Type; }
+        std::string GetValue() const { return m_Value; }
+
+        int GetLine() const { return m_Line; }
+        int GetColumn() const { return m_Column; }
 
         bool IsValid();
 
@@ -43,10 +50,13 @@ namespace Quartz {
 
         bool HasBinPrec();
 
-        std::string Str();
+        friend std::ostream& operator<<(std::ostream& os, const Token& token);
     private:
         TokenType m_Type;
         std::string m_Value;
+
+        int m_Line = 0;
+        int m_Column = 0;
     };
 }
 

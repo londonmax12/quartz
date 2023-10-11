@@ -14,6 +14,7 @@ set(SOURCES
     src/Parser/Parser.cpp
     src/Utils/MemoryPool.cpp
     src/Generator/Stack.cpp
+        src/Logging/Logging.cpp
 )
 
 set(HEADERS
@@ -24,6 +25,7 @@ set(HEADERS
     src/Parser/AstNode.h
     src/Utils/MemoryPool.h
     src/Generator/Stack.h
+        src/Logging/Logging.h
 )
 
 add_executable(quartz-compiler ${SOURCES} ${HEADERS})
