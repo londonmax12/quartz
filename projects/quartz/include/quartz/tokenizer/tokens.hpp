@@ -45,10 +45,13 @@ namespace Quartz {
         TokenType Type = NONE;
         std::any Data;
 
+        int Line = 0;
+        int CharPos = 0;
+
         Token() = default;
 
-        Token(const TokenType& Type, const std::any& Data=NULL)
-            : Type(Type), Data(Data)
+        Token(const TokenType& Type, const std::any& Data=NULL, const int Line = 0, const int CharPos = 0)
+            : Type(Type), Data(Data), Line(Line), CharPos(CharPos)
         {
         }
 

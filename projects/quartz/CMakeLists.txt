@@ -4,6 +4,8 @@ set(QUARTZ_SOURCES
 	src/lexer/lexer.cpp
 	src/tokenizer/tokenizer.cpp
 	src/utils/fileUtils.cpp
+	src/logging/logging.cpp
+	src/lexer/lexer.cpp
 )
 
 set(QUARTZ_HEADERS
@@ -12,6 +14,8 @@ set(QUARTZ_HEADERS
 	include/quartz/tokenizer/tokenizer.hpp
 	include/quartz/tokenizer/tokens.hpp
 	include/quartz/utils/fileUtils.hpp
+	include/quartz/logging/logging.hpp
+	include/quartz/lexer/lexer.hpp
 )
 
 # Define the precompiled header for quartz

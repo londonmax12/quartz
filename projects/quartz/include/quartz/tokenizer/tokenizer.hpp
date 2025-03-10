@@ -3,6 +3,7 @@
 #include "pch.hpp"
 
 #include "tokenizer/tokens.hpp"
+#include "logging/logging.hpp"
 
 namespace Quartz {
 	class Tokenizer {

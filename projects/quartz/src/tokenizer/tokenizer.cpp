@@ -48,7 +48,11 @@ namespace Quartz {
 		bool isSingleLineComment = false;
 		char inString = 'n';
 
+		int line = 1;
+		int charPos = 0;
+
 		for (int i = 0; input[i] != '\0'; ++i) {
+			charPos++;
 			char currChar = input[i];
 			switch (currChar)
 			{
@@ -208,12 +212,21 @@ namespace Quartz {
 				break;
 			case '\n':
 			case '\r':
+				if (currChar == '\n' && peek(input, i) == '\r') {
+					i++;
+				} else if (currChar == '\r' && peek(input, i) == '\n') {
+					i++;
+				}
+
 				isSingleLineComment = false;
 				if (!currString.empty())
 				{
 					tokens.push_back(parseString(currString));
 					currString = "";
 				}
+				line++;
+				charPos = 0;
+
 				break;
 			case '>':
 				if (isSingleLineComment)
@@ -249,7 +262,7 @@ namespace Quartz {
 						currString += currChar;
 					}
 				} else {
-					std::cerr << "Unexpected symbol: " << currChar << std::endl;
+					Logger::getInstance().throwException(UnexpectedSymbolException(line, charPos, currChar));
 				}
 				break;
 			}
