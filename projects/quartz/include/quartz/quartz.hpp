@@ -1,3 +1,7 @@
 #include "../pch.hpp"
+#include "tokenizer/tokenizer.hpp"
+#include "utils/fileUtils.hpp"
 
-void test_print();
+namespace Quartz {
+	void test_print();
+}

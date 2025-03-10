@@ -1,13 +1,24 @@
 # Define a list of source files for quartz
 set(QUARTZ_SOURCES
     src/quartz.cpp
+	src/lexer/lexer.cpp
+	src/tokenizer/tokenizer.cpp
+	src/utils/fileUtils.cpp
+)
+
+set(QUARTZ_HEADERS
+	include/quartz/quartz.hpp
+	include/quartz/lexer/lexer.hpp
+	include/quartz/tokenizer/tokenizer.hpp
+	include/quartz/tokenizer/tokens.hpp
+	include/quartz/utils/fileUtils.hpp
 )
 
 # Define the precompiled header for quartz
 set(QUARTZ_PCH_FILE ${CMAKE_CURRENT_SOURCE_DIR}/pch.hpp)
 
 # Define the quartz library
-add_library(quartz STATIC ${QUARTZ_SOURCES})
+add_library(quartz STATIC ${QUARTZ_SOURCES} ${QUARTZ_HEADERS})
 
 # Specify include directories for quartz
 target_include_directories(quartz PUBLIC

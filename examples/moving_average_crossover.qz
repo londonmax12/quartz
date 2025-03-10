@@ -2,8 +2,8 @@ strategy MovingAverageCrossover {
     // Constants
     const data_source: string = "AAPL"   // Data source: AAPL stock
     const interval: string = "1d"   // Data interval: 1 day
-    const short_window = 10   // Short moving average window
-    const long_window = 50   // Long moving average window
+    const short_window: int = 10   // Short moving average window
+    const long_window: int = 50   // Long moving average window
 
     // Initialize strategy - this will run once when strategy is loaded
     init() -> void {
