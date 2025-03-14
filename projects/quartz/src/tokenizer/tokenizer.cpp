@@ -1,18 +1,18 @@
 #include "tokenizer/tokenizer.hpp"
 
 namespace Quartz {
-	char Tokenizer::peek(const char* input, int i)
+	char Tokenizer::peek(int i)
 	{
-		return input[i + 1] != '\0' ? input[i + 1] : '\0';
+		return mInput[i + 1] != '\0' ? mInput[i + 1] : '\0';
 	}
 
-	Token Tokenizer::buildNumber(const char* input, int* index)
+	Token Tokenizer::buildNumber(int* index)
 	{
 		std::string number = "";
 		bool isFloat = false;
-		for (int i = *index; input[i] != '\0'; ++i) {
+		for (int i = *index; mInput[i] != '\0'; ++i) {
 			(*index)++;
-			char currChar = input[i];
+			char currChar = mInput[i];
 			if (std::isdigit(currChar)) {
 				number += currChar;
 			}
@@ -42,7 +42,7 @@ namespace Quartz {
 		return token;
 	}
 
-	std::vector<Token> Tokenizer::tokenize(const char* input) {
+	std::vector<Token> Tokenizer::tokenize() {
 		std::vector<Token> tokens = {};
 		std::string currString = "";
 		bool isSingleLineComment = false;
@@ -51,9 +51,9 @@ namespace Quartz {
 		int line = 1;
 		int charPos = 0;
 
-		for (int i = 0; input[i] != '\0'; ++i) {
+		for (int i = 0; mInput[i] != '\0'; ++i) {
 			charPos++;
-			char currChar = input[i];
+			char currChar = mInput[i];
 			switch (currChar)
 			{
 			case ' ':
@@ -131,7 +131,7 @@ namespace Quartz {
 				if (isSingleLineComment)
 					break;
 
-				if (peek(input, i) == '/') {
+				if (peek(i) == '/') {
 					isSingleLineComment = true;
 					i++;
 				}
@@ -167,8 +167,7 @@ namespace Quartz {
 				if (isSingleLineComment)
 					break;
 
-				if (!currString.empty())
-				{
+				if (!currString.empty()) {
 					tokens.push_back(parseString(currString));
 					currString = "";
 				}
@@ -178,8 +177,7 @@ namespace Quartz {
 				if (isSingleLineComment)
 					break;
 
-				if (!currString.empty())
-				{
+				if (!currString.empty()) {
 					tokens.push_back(parseString(currString));
 					currString = "";
 				}
@@ -189,8 +187,7 @@ namespace Quartz {
 				if (isSingleLineComment)
 					break;
 
-				if (!currString.empty())
-				{
+				if (!currString.empty()) {
 					tokens.push_back(parseString(currString));
 					currString = "";
 				}
@@ -200,21 +197,20 @@ namespace Quartz {
 				if (isSingleLineComment)
 					break;
 
-				if (peek(input, i) == '>') {
+				if (peek(i) == '>') {
 					tokens.push_back(Token(RIGHT_ARROW));
 					i++;
 				}
-				if (!currString.empty())
-				{
+				if (!currString.empty()) {
 					tokens.push_back(parseString(currString));
 					currString = "";
 				}
 				break;
 			case '\n':
 			case '\r':
-				if (currChar == '\n' && peek(input, i) == '\r') {
+				if (currChar == '\n' && peek(i) == '\r') {
 					i++;
-				} else if (currChar == '\r' && peek(input, i) == '\n') {
+				} else if (currChar == '\r' && peek(i) == '\n') {
 					i++;
 				}
 
@@ -232,8 +228,7 @@ namespace Quartz {
 				if (isSingleLineComment)
 					break;
 
-				if (!currString.empty())
-				{
+				if (!currString.empty()) {
 					tokens.push_back(parseString(currString));
 					currString = "";
 				}
@@ -243,12 +238,21 @@ namespace Quartz {
 				if (isSingleLineComment)
 					break;
 
-				if (!currString.empty())
-				{
+				if (!currString.empty()) {
 					tokens.push_back(parseString(currString));
 					currString = "";
 				}
 				tokens.push_back(Token(LESS_THAN));
+				break;
+			case ';':
+				if (isSingleLineComment)
+					break;
+
+				if (!currString.empty()) {
+					tokens.push_back(parseString(currString));
+					currString = "";
+				}
+				tokens.push_back(Token(SEMI_COLON));
 				break;
 			default:
 				if (isSingleLineComment)
@@ -256,7 +260,7 @@ namespace Quartz {
 
 				if (std::isalnum(currChar) || currChar == '_') {
 					if (std::isdigit(currChar) && inString == 'n' && currString.empty()) {
-						tokens.push_back(buildNumber(input, &i));
+						tokens.push_back(buildNumber(&i));
 					}
 					else {
 						currString += currChar;

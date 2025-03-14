@@ -35,10 +35,14 @@ namespace Quartz {
         CLOSE_BRACKET,
         EQUALS,
         COLON,
+        SEMI_COLON,
         COMMA,
         RIGHT_ARROW,
         GREATER_THAN,
         LESS_THAN,
+
+        END,
+        ERR,
     };
 
     struct Token {
@@ -95,6 +99,8 @@ namespace Quartz {
                 return "<EQUALS>";
             case COLON:
                 return "<COLON>";
+            case SEMI_COLON:
+                return "<SEMI_COLON>";
             case COMMA:
                 return "<COMMA>";
             case KEYWORD_BUY:
@@ -126,8 +132,8 @@ namespace Quartz {
         {"return", KEYWORD_RETURN},
 
         {"string", KEYWORD_STRING},
-        {"string", KEYWORD_FLOAT},
-        {"string", KEYWORD_INT},
+        {"float", KEYWORD_FLOAT},
+        {"int", KEYWORD_INT},
         {"void", KEYWORD_VOID},
 
         {"null", KEYWORD_NULL},

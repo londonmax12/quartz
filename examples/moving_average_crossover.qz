@@ -1,30 +1,30 @@
 strategy MovingAverageCrossover {
     // Constants
-    const data_source: string = "AAPL"   // Data source: AAPL stock
-    const interval: string = "1d"   // Data interval: 1 day
-    const short_window: int = 10   // Short moving average window
-    const long_window: int = 50   // Long moving average window
+    const data_source: string = "AAPL";   // Data source: AAPL stock
+    const interval: string = "1d";   // Data interval: 1 day
+    const short_window: int = 10;   // Short moving average window
+    const long_window: int = 50;  // Long moving average window
 
     // Initialize strategy - this will run once when strategy is loaded
     init() -> void {
-        add_data_source(data_source, interval)   // Add AAPL stock data with interval of 1 day
+        add_data_source(data_source, interval);   // Add AAPL stock data with interval of 1 day
 
         // Define input variables for the strategy
-        define_input_variables(price, short_ma, long_ma)
+        define_input_variables(price, short_ma, long_ma);
     }
 
     // Process incoming data - this is called on each new data point
     on_data() -> void {
         // Generate a trade signal based on the moving average crossover
         if (short_ma > long_ma) {
-            emit_signal(BUY)   // Buy when short MA crosses above long MA
-            return
+            emit_signal(BUY);   // Buy when short MA crosses above long MA
+            return;
         } else if (short_ma < long_ma) {
-            emit_signal(SELL)   // Sell when short MA crosses below long MA
-            return
+            emit_signal(SELL);   // Sell when short MA crosses below long MA
+            return;
         } else {
-            emit_signal(HOLD)   // Hold if there is no crossover, this is optional as no emitted signal will assume hold
-            return
+            emit_signal(HOLD);   // Hold if there is no crossover, this is optional as no emitted signal will assume hold
+            return;
         }
     }
 }

@@ -1,21 +1,20 @@
 # Define a list of source files for quartz
 set(QUARTZ_SOURCES
     src/quartz.cpp
-	src/lexer/lexer.cpp
 	src/tokenizer/tokenizer.cpp
 	src/utils/fileUtils.cpp
 	src/logging/logging.cpp
-	src/lexer/lexer.cpp
+	src/parser/parser.cpp
 )
 
 set(QUARTZ_HEADERS
 	include/quartz/quartz.hpp
-	include/quartz/lexer/lexer.hpp
 	include/quartz/tokenizer/tokenizer.hpp
 	include/quartz/tokenizer/tokens.hpp
 	include/quartz/utils/fileUtils.hpp
 	include/quartz/logging/logging.hpp
-	include/quartz/lexer/lexer.hpp
+	include/quartz/parser/abstractSyntaxTree.hpp
+	include/quartz/parser/parser.hpp
 )
 
 # Define the precompiled header for quartz
