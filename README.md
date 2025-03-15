@@ -1,5 +1,12 @@
-# Quartz 🚀
-**Quartz** is a high-performance, statically-typed language designed specifically for quantitative trading. Built for speed, it features a concise and easy-to-learn syntax while providing the power and flexibility needed for algorithmic trading strategies.
+<div style="display: flex; align-items: center;">
+  <div>
+    <h1>Quartz 🚀</h1>
+    <p><b>Quartz</b> is a high-performance, statically-typed language designed specifically for quantitative trading. Built for speed, it features a concise and easy-to-learn syntax while providing the power and flexibility needed for algorithmic trading strategies.</p>
+  </div>
+<img src="./quartz.png" alt="logo" width="80" height="200" style="margin-left: 10px;">
+</div>
+
+
 ## 📋 Table of Contents
 - [🔍 Overview](#overview)
 - [🧑‍💻 Key Features](#key-features)
