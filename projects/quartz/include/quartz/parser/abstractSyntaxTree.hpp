@@ -2,12 +2,31 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <any>
 #include <iostream>
+#include <any>
 
 #include "tokenizer/tokens.hpp"
 
 namespace Quartz {
+
+    enum class NodeType {
+        Program,
+        ConstDecl,
+        Strategy,
+        StrategyInitFunction,
+        StrategyOnDataFunction,
+        FunctionDecl,
+        Block,
+        ExprStmt,
+        Signal,
+        IfStmt,
+        ReturnStmt,
+        CallExpr,
+        BinaryExpr,
+        IdentifierExpr,
+        LiteralExpr,
+    };
+
     enum Signal {
         BUY,
         HOLD,
@@ -18,6 +37,8 @@ namespace Quartz {
     struct ASTNode {
         virtual ~ASTNode() = default;
         virtual void print(int indent = 0) const = 0;
+        virtual NodeType nodeType() const = 0;
+
     protected:
         void printIndent(int indent) const {
             for (int i = 0; i < indent; ++i)
@@ -33,37 +54,27 @@ namespace Quartz {
             for (const auto& decl : declarations)
                 decl->print(indent + 1);
         }
+        NodeType nodeType() const override { return NodeType::Program; }
     };
 
     struct ConstDeclNode : public ASTNode {
         std::string name;
         TokenType type;
         std::string value;
-        ConstDeclNode(const std::string &name, TokenType type, const std::string &value)
+        ConstDeclNode(const std::string& name, TokenType type, const std::string& value)
             : name(name), type(type), value(value) {}
         void print(int indent = 0) const override {
             printIndent(indent);
             std::cout << "ConstDeclNode: " << name << " = " << value << "\n";
         }
-    };
-
-    struct StrategyNode : public ASTNode {
-        std::string name;
-        std::vector<std::unique_ptr<ASTNode>> body;
-        StrategyNode(const std::string &name) : name(name) {}
-        void print(int indent = 0) const override {
-            printIndent(indent);
-            std::cout << "StrategyNode: " << name << "\n";
-            for (const auto& stmt : body)
-                stmt->print(indent + 1);
-        }
+        NodeType nodeType() const override { return NodeType::ConstDecl; }
     };
 
     struct FunctionDeclNode : public ASTNode {
         std::string name;
         TokenType returnType;
         std::unique_ptr<ASTNode> body;
-        FunctionDeclNode(const std::string &name, TokenType returnType, std::unique_ptr<ASTNode> body)
+        FunctionDeclNode(const std::string& name, TokenType returnType, std::unique_ptr<ASTNode> body)
             : name(name), returnType(returnType), body(std::move(body)) {}
         void print(int indent = 0) const override {
             printIndent(indent);
@@ -71,6 +82,60 @@ namespace Quartz {
             if (body)
                 body->print(indent + 1);
         }
+        NodeType nodeType() const override { return NodeType::StrategyOnDataFunction; }
+    };
+
+    struct StrategyInitNode : public FunctionDeclNode {
+        StrategyInitNode(TokenType returnType, std::unique_ptr<ASTNode> body)
+            : FunctionDeclNode("StrategyInit", returnType, std::move(body)) {}
+
+        void print(int indent = 0) const override {
+            printIndent(indent);
+            std::cout << "StrategyInitNode: " << name << "\n";
+            if (body)
+                body->print(indent + 1);
+        }
+
+        NodeType nodeType() const override { return NodeType::StrategyInitFunction; }
+    };
+
+    struct StrategyOnDataNode : public FunctionDeclNode {
+        StrategyOnDataNode(TokenType returnType, std::unique_ptr<ASTNode> body)
+            : FunctionDeclNode("StrategyOnData", returnType, std::move(body)) {}
+
+        void print(int indent = 0) const override {
+            printIndent(indent);
+            std::cout << "StrategyOnDataNode: " << name << "\n";
+            if (body)
+                body->print(indent + 1);
+        }
+
+        NodeType nodeType() const override { return NodeType::FunctionDecl; }
+    };
+
+    struct StrategyNode : public ASTNode {
+        std::string name;
+        std::vector<std::unique_ptr<ASTNode>> body;
+
+        std::unique_ptr<StrategyInitNode> initNode = nullptr;
+        std::unique_ptr<StrategyOnDataNode> onDataNode = nullptr;
+
+        StrategyNode(const std::string& name) : name(name) {}
+        void print(int indent = 0) const override {
+            printIndent(indent);
+            std::cout << "StrategyNode: " << name << "\n";
+            if (initNode) {
+                printIndent(indent + 1);
+                initNode->print(indent + 1);
+            }
+            if (onDataNode) {
+                printIndent(indent + 1);
+                onDataNode->print(indent + 1);
+            }
+            for (const auto& stmt : body)
+                stmt->print(indent + 1);
+        }
+        NodeType nodeType() const override { return NodeType::Strategy; }
     };
 
     struct BlockNode : public ASTNode {
@@ -81,6 +146,7 @@ namespace Quartz {
             for (const auto& stmt : statements)
                 stmt->print(indent + 1);
         }
+        NodeType nodeType() const override { return NodeType::Block; }
     };
 
     struct ExprStmtNode : public ASTNode {
@@ -92,6 +158,7 @@ namespace Quartz {
             std::cout << "ExprStmtNode\n";
             expression->print(indent + 1);
         }
+        NodeType nodeType() const override { return NodeType::ExprStmt; }
     };
 
     struct SignalNode : public ASTNode {
@@ -101,6 +168,7 @@ namespace Quartz {
             printIndent(indent);
             std::cout << "SignalNode: " << (signal == BUY ? "BUY" : signal == HOLD ? "HOLD" : "SELL") << "\n";
         }
+        NodeType nodeType() const override { return NodeType::Signal; }
     };
 
     struct IfStmtNode : public ASTNode {
@@ -108,11 +176,11 @@ namespace Quartz {
         std::unique_ptr<BlockNode> thenBlock;
         std::unique_ptr<ASTNode> elseBranch;
         IfStmtNode(std::unique_ptr<ASTNode> condition,
-                   std::unique_ptr<BlockNode> thenBlock,
-                   std::unique_ptr<ASTNode> elseBranch)
+            std::unique_ptr<BlockNode> thenBlock,
+            std::unique_ptr<ASTNode> elseBranch)
             : condition(std::move(condition)),
-              thenBlock(std::move(thenBlock)),
-              elseBranch(std::move(elseBranch)) {}
+            thenBlock(std::move(thenBlock)),
+            elseBranch(std::move(elseBranch)) {}
         void print(int indent = 0) const override {
             printIndent(indent);
             std::cout << "IfStmtNode\n";
@@ -124,6 +192,7 @@ namespace Quartz {
                 elseBranch->print(indent + 1);
             }
         }
+        NodeType nodeType() const override { return NodeType::IfStmt; }
     };
 
     struct ReturnStmtNode : public ASTNode {
@@ -131,12 +200,13 @@ namespace Quartz {
             printIndent(indent);
             std::cout << "ReturnStmtNode\n";
         }
+        NodeType nodeType() const override { return NodeType::ReturnStmt; }
     };
 
     struct CallExprNode : public ASTNode {
         std::string callee;
         std::vector<std::unique_ptr<ASTNode>> arguments;
-        CallExprNode(const std::string &callee, std::vector<std::unique_ptr<ASTNode>> arguments)
+        CallExprNode(const std::string& callee, std::vector<std::unique_ptr<ASTNode>> arguments)
             : callee(callee), arguments(std::move(arguments)) {}
         void print(int indent = 0) const override {
             printIndent(indent);
@@ -144,6 +214,7 @@ namespace Quartz {
             for (const auto& arg : arguments)
                 arg->print(indent + 1);
         }
+        NodeType nodeType() const override { return NodeType::CallExpr; }
     };
 
     struct BinaryExprNode : public ASTNode {
@@ -158,23 +229,26 @@ namespace Quartz {
             left->print(indent + 1);
             right->print(indent + 1);
         }
+        NodeType nodeType() const override { return NodeType::BinaryExpr; }
     };
 
     struct IdentifierExprNode : public ASTNode {
         std::string name;
-        IdentifierExprNode(const std::string &name) : name(name) {}
+        IdentifierExprNode(const std::string& name) : name(name) {}
         void print(int indent = 0) const override {
             printIndent(indent);
             std::cout << "IdentifierExprNode: " << name << "\n";
         }
+        NodeType nodeType() const override { return NodeType::IdentifierExpr; }
     };
 
     struct LiteralExprNode : public ASTNode {
         std::string value;
-        LiteralExprNode(const std::string &value) : value(value) {}
+        LiteralExprNode(const std::string& value) : value(value) {}
         void print(int indent = 0) const override {
             printIndent(indent);
             std::cout << "LiteralExprNode: " << value << "\n";
         }
+        NodeType nodeType() const override { return NodeType::LiteralExpr; }
     };
 }

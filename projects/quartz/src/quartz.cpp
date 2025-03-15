@@ -7,7 +7,7 @@
 #include "parser/abstractSyntaxTree.hpp"
 
 namespace Quartz {
-	void run_code(const char* code)
+	std::shared_ptr<ProgramNode> run_code(const char* code)
 	{
 		Logger::getInstance().log(Logger::INFO, "Tokenizing");
 		Tokenizer tokenizer = Tokenizer(code);
@@ -16,16 +16,16 @@ namespace Quartz {
 		Logger::getInstance().log(Logger::INFO, "Parsing tokens");
 		Parser parser = Parser(tokens);
 		auto& programNode = parser.parse();
-		programNode->print(0);
 
-		return;
+		return programNode;
 	}
 
-	void run_file(const char* filepath)
+	std::shared_ptr<ProgramNode> run_file(const char* filepath)
     {
 		Logger::getInstance().logf(Logger::INFO, "Reading file content: %s", filepath);
 		const char* fileContents = loadFileToCString(filepath);
 
-		return;
+
+		return run_code(fileContents);
     }
 }

@@ -43,13 +43,13 @@ namespace Quartz {
 
         void log(Level level, const std::string& message);
 
-        void setLevel(Level level) { currentLevel = level; }
+        void setPrintLevel(Level level) { printLevel = level; }
 
         void setOutputStream(std::ostream& outputStream) { out = &outputStream; }
 
         template <typename... Args>
         void logf(Level level, const std::string& format, Args... args) {
-            if (level >= currentLevel) {
+            if (level >= printLevel) {
                 log(level, formatMessage(format, args...));
             }
         }
@@ -59,7 +59,8 @@ namespace Quartz {
     private:
         std::ostream* out;
         std::mutex mutex;
-        Level currentLevel = DEBUG;
+
+        Level printLevel = ERROR;
 
         Logger() : out(&std::cout) {}
 

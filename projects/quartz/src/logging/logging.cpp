@@ -3,7 +3,7 @@
 void Quartz::Logger::log(Level level, const std::string& message)
 {
     std::lock_guard<std::mutex> lock(mutex);
-    if (level >= currentLevel) {
+    if (level >= printLevel) {
         *out << getCurrentTime() << " [" << levelToString(level) << "] " << message << std::endl;
     }
 }

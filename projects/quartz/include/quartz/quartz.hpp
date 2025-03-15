@@ -1,6 +1,8 @@
 #include "../pch.hpp"
 
+#include "parser/abstractSyntaxTree.hpp"
+
 namespace Quartz {
-	void run_code(const char* code);
-	void run_file(const char* file);
+	std::shared_ptr<ProgramNode> run_code(const char* code);
+	std::shared_ptr<ProgramNode> run_file(const char* file);
 }
