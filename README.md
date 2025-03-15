@@ -24,7 +24,7 @@ Quartz is designed for quantitative traders who need a fast, reliable language f
 - **⏩ Static Typing:** Ensures high-speed execution and prevents runtime overhead.
 - **📊 Optimized Data Handling:** Handles large market data efficiently for real-time trading.
 - **⚡ Low Latency:** Essential for high-frequency trading strategies.
-- **🔄 Compiled and Interpreted Modes:** Compile for maximum performance or interpret for fast prototyping.
+- **🔄 Compiled and Interpreted Modes:** Compile for maximum performance & deployment or interpret for fast prototyping & backtesting.
 - **✨Concise Syntax:** Built to be easy to learn and write, especially for algorithmic trading.
 ## Quick Start
 ### Installation
