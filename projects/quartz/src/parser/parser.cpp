@@ -38,7 +38,22 @@ std::unique_ptr<Quartz::StrategyNode> Quartz::Parser::parseStrategy()
             strategy->body.push_back(parseConstDeclaration());
         else if (token.Type == IDENTIFIER)
         {
-            strategy->body.push_back(parseFunctionDeclaration());
+            auto& functionNode = parseFunctionDeclaration();
+            switch (functionNode->nodeType()) {
+            case NodeType::StrategyInitFunction: {
+                std::unique_ptr<StrategyInitNode> initNode{static_cast<StrategyInitNode*>(functionNode.release())};
+                strategy->initNode = std::move(initNode);
+                break;
+            }
+            case NodeType::StrategyOnDataFunction: {
+                std::unique_ptr<StrategyOnDataNode> onDataNode{static_cast<StrategyOnDataNode*>(functionNode.release())};
+                strategy->onDataNode = std::move(onDataNode);
+                break;
+            }
+            default:
+                strategy->body.push_back(std::move(functionNode));
+                break;
+            }
         }
         else
             advance();

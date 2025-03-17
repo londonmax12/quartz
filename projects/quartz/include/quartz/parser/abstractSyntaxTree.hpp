@@ -110,7 +110,7 @@ namespace Quartz {
                 body->print(indent + 1);
         }
 
-        NodeType nodeType() const override { return NodeType::FunctionDecl; }
+        NodeType nodeType() const override { return NodeType::StrategyOnDataFunction; }
     };
 
     struct StrategyNode : public ASTNode {
