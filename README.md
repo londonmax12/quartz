@@ -2,7 +2,7 @@
 <div>
 <h1>Quartz 🚀</h1>
 <img src="./quartz.png" alt="logo" width="80" height="200">
-<p><b>Quartz</b> is a high-performance, statically-typed language designed specifically for quantitative trading. Built for speed, it features a concise and easy-to-learn syntax while providing the power and flexibility needed for algorithmic trading strategies.</p>
+<p><b>Quartz</b> is a WIP high-performance, statically-typed language designed specifically for quantitative trading. Built for speed, it features a concise and easy-to-learn syntax while providing the power and flexibility needed for algorithmic trading strategies.</p>
 </div>
 
 
